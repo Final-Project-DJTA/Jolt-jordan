@@ -31,17 +31,33 @@ export type JobType = {
     _id: string;
     name: string;
     slug: string;
+    location: string;
+    category: string;
+    salary: string;
     description: string;
     excerpt: string;
-    salary: number;
-    category: string;
-    imgUrl: string;
-    location: string;
+    company: company;
+    detail: detail;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export type WishlistType = {
+export type company = {
+    name:string;
+    industry: string;
+    size: string;
+    website: string;
+    headquarters: string;
+    logo: string
+}
+
+export type detail = {
+    responsibilities: string[]
+    requirements: string[]
+    benefits: string[]
+}
+
+export type BookmarkType = {
     _id: string
     userId: string | ObjectId
     jobId: string | ObjectId
