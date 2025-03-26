@@ -27,18 +27,16 @@ export type UserType = {
 //     updatedAt: Date;
 // }
 
-
-//blm bener
 export type JobType = {	
     _id: string;
     name: string;
     slug: string;
+    location: string;
+    category: string;
+    salary: string;
     description: string;
     excerpt: string;
-    salary: number;
-    category: string;
-    location: string;
-    company: company[];
+    company: company;
     detail: detail;
     createdAt: Date;
     updatedAt: Date;
@@ -59,7 +57,7 @@ export type detail = {
     benefits: string[]
 }
 
-export type WishlistType = {
+export type BookmarkType = {
     _id: string
     userId: string | ObjectId
     jobId: string | ObjectId
