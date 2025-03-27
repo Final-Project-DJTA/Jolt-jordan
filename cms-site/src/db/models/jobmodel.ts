@@ -1,6 +1,6 @@
 import { database } from "../config/mongodb";
 
-class JobModel {
+class jobModel {
     static collection() {
         return database.collection('jobs')
     }
@@ -18,4 +18,4 @@ class JobModel {
 
 }
 
-export default JobModel
+export default jobModel
