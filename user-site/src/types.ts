@@ -11,21 +11,19 @@ export type UserType = {
     email: string;
     username: string;
     password: string;
+    profile?: profile;
+
 }
 
-// export type ProductType = {	
-//     _id: string;
-//     name: string;
-//     slug: string;
-//     description: string;
-//     excerpt: string;
-//     price: number;
-//     tags: string[];
-//     thumbnail: string;
-//     images: string[];
-//     createdAt: Date;
-//     updatedAt: Date;
-// }
+export type profile = {
+    avatar?: string;
+    location?: string;
+    bio?: string
+    resume?: string;
+    skills?: string[];
+    appliedJobs?: string[];
+    savedJobs?: string[];
+}
 
 export type JobType = {	
     _id: string;
