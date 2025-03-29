@@ -6,13 +6,12 @@ export type CustomError = {
 }
 
 export type UserType = {
-    // _id: string;
     name: string;
     email: string;
+    phoneNumber: string
     username: string;
     password: string;
     profile?: profile;
-
 }
 
 export type profile = {
