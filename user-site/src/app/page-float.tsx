@@ -8,6 +8,7 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import JobQuiz from "@/components/home/job-quiz"
 import LoadingAnimation from "@/components/ui/loading-animation"
+import { Sparkles } from "lucide-react"
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false)
@@ -31,22 +32,45 @@ export default function Home() {
   return (
     <div className="container mx-auto py-12">
       <section className="flex flex-col items-center justify-center text-center py-20">
-        <motion.div
-          initial={{ y: -100, opacity: 0 }}
-          animate={isLoaded ? { y: 0, opacity: 1 } : {}}
-          transition={{ duration: 0.8, type: "spring" }}
-          className="mb-8 relative w-32 h-32"
-        >
-          <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
+        <div className="relative mb-16">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={isLoaded ? { scale: [1, 1.2, 1] } : {}}
-            transition={{ delay: 1, duration: 0.5, times: [0, 0.5, 1] }}
-            className="absolute -top-4 -right-4 bg-secondary text-secondary-foreground text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap"
+            initial={{ y: -100, opacity: 0 }}
+            animate={isLoaded ? { y: 0, opacity: 1 } : {}}
+            transition={{ duration: 0.8, type: "spring" }}
+            className="relative w-32 h-32"
           >
-            Sparking your next job
+            <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
           </motion.div>
-        </motion.div>
+
+          {/* Completely detached floating badge below the logo */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={
+              isLoaded
+                ? {
+                    y: [20, 0],
+                    opacity: 1,
+                  }
+                : {}
+            }
+            transition={{
+              delay: 1,
+              duration: 0.5,
+              y: {
+                repeat: Number.POSITIVE_INFINITY,
+                repeatType: "reverse",
+                duration: 2,
+                ease: "easeInOut",
+              },
+            }}
+            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4"
+          >
+            <div className="bg-secondary text-secondary-foreground px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span className="font-bold">Sparking your next job</span>
+            </div>
+          </motion.div>
+        </div>
 
         <motion.h1
           initial={{ opacity: 0 }}

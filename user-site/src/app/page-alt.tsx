@@ -31,22 +31,39 @@ export default function Home() {
   return (
     <div className="container mx-auto py-12">
       <section className="flex flex-col items-center justify-center text-center py-20">
-        <motion.div
-          initial={{ y: -100, opacity: 0 }}
-          animate={isLoaded ? { y: 0, opacity: 1 } : {}}
-          transition={{ duration: 0.8, type: "spring" }}
-          className="mb-8 relative w-32 h-32"
-        >
-          <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
+        <div className="relative mb-8">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={isLoaded ? { scale: [1, 1.2, 1] } : {}}
-            transition={{ delay: 1, duration: 0.5, times: [0, 0.5, 1] }}
-            className="absolute -top-4 -right-4 bg-secondary text-secondary-foreground text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap"
+            initial={{ y: -100, opacity: 0 }}
+            animate={isLoaded ? { y: 0, opacity: 1 } : {}}
+            transition={{ duration: 0.8, type: "spring" }}
+            className="relative w-32 h-32"
           >
-            Sparking your next job
+            <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
           </motion.div>
-        </motion.div>
+
+          {/* Badge positioned toward the thumb area with a connecting line */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isLoaded ? { opacity: 1 } : {}}
+            transition={{ delay: 1, duration: 0.5 }}
+            className="absolute left-[-80px] top-[40px]"
+          >
+            <motion.div
+              initial={{ width: 0 }}
+              animate={isLoaded ? { width: 40 } : {}}
+              transition={{ delay: 1.2, duration: 0.3 }}
+              className="absolute top-1/2 right-0 h-[2px] bg-secondary transform -translate-y-1/2"
+            />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={isLoaded ? { scale: 1 } : {}}
+              transition={{ delay: 1.5, duration: 0.5, type: "spring" }}
+              className="bg-secondary text-secondary-foreground text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-md relative right-[40px]"
+            >
+              Sparking your next job
+            </motion.div>
+          </motion.div>
+        </div>
 
         <motion.h1
           initial={{ opacity: 0 }}

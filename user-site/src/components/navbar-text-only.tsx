@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import ParticleBackground from "@/components/ui/particle-background"
@@ -18,22 +17,21 @@ export default function Navbar() {
     <header className="bg-primary text-primary-foreground relative overflow-hidden">
       <ParticleBackground />
       <div className="container mx-auto flex items-center justify-between py-4 relative z-10">
-        <Link href="/" className="flex items-center gap-2">
-          <motion.div
-            initial={{ rotate: -180, opacity: 0, scale: 0.5 }}
-            animate={isLoaded ? { rotate: 0, opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
-            className="relative w-10 h-10 md:w-12 md:h-12"
-          >
-            <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
-          </motion.div>
+        <Link href="/" className="group">
           <motion.span
-            initial={{ x: -20, opacity: 0 }}
-            animate={isLoaded ? { x: 0, opacity: 1 } : {}}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-2xl font-bold"
+            initial={{ opacity: 0 }}
+            animate={isLoaded ? { opacity: 1 } : {}}
+            transition={{ duration: 0.5 }}
+            className="text-2xl font-bold relative"
           >
-            Jolt Jordan
+            <span className="text-white">Jolt</span>
+            <span className="text-secondary"> Jordan</span>
+            <motion.span
+              className="absolute -bottom-1 left-0 h-0.5 bg-secondary"
+              initial={{ width: 0 }}
+              animate={isLoaded ? { width: "100%" } : {}}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            />
           </motion.span>
         </Link>
         <nav>

@@ -2,39 +2,57 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import ParticleBackground from "@/components/ui/particle-background"
 
 export default function Navbar() {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [sparkPosition, setSparkPosition] = useState(0)
 
   useEffect(() => {
     setIsLoaded(true)
-  }, [])
+
+    // Animate the spark across the text
+    if (isLoaded) {
+      const interval = setInterval(() => {
+        setSparkPosition((prev) => (prev < 100 ? prev + 10 : 0))
+      }, 500)
+
+      return () => clearInterval(interval)
+    }
+  }, [isLoaded])
 
   return (
     <header className="bg-primary text-primary-foreground relative overflow-hidden">
       <ParticleBackground />
       <div className="container mx-auto flex items-center justify-between py-4 relative z-10">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="group relative">
           <motion.div
-            initial={{ rotate: -180, opacity: 0, scale: 0.5 }}
-            animate={isLoaded ? { rotate: 0, opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
-            className="relative w-10 h-10 md:w-12 md:h-12"
+            initial={{ opacity: 0 }}
+            animate={isLoaded ? { opacity: 1 } : {}}
+            className="text-2xl font-bold relative overflow-hidden"
           >
-            <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
+            <span className="relative z-10">Jolt Jordan</span>
+
+            {/* Animated spark effect */}
+            <motion.div
+              className="absolute top-0 h-full w-[20px] bg-gradient-to-r from-transparent via-secondary to-transparent"
+              style={{
+                left: `${sparkPosition}%`,
+                filter: "blur(8px)",
+                opacity: 0.8,
+              }}
+            />
+
+            {/* Underline effect on hover */}
+            <motion.div
+              className="absolute bottom-0 left-0 h-[2px] bg-secondary origin-left"
+              initial={{ scaleX: 0 }}
+              whileHover={{ scaleX: 1 }}
+              transition={{ duration: 0.3 }}
+            />
           </motion.div>
-          <motion.span
-            initial={{ x: -20, opacity: 0 }}
-            animate={isLoaded ? { x: 0, opacity: 1 } : {}}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-2xl font-bold"
-          >
-            Jolt Jordan
-          </motion.span>
         </Link>
         <nav>
           <ul className="flex items-center space-x-6">

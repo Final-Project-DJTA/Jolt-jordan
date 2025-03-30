@@ -335,21 +335,11 @@ export default function CVGenerateForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    const element = document.querySelector('[data-value="personal"]');
-                    if (element instanceof HTMLElement) {
-                      element.click();
-                    }
-                  }}
+                  onClick={() => (document.querySelector('[data-value="personal"]') as HTMLElement)?.click()}
                 >
                   Previous: Personal Info
                 </Button>
-                <Button type="button" onClick={() => {
-                  const element = document.querySelector('[data-value="experience"]');
-                  if (element instanceof HTMLElement) {
-                    element.click();
-                  }
-                }}>
+                <Button type="button" onClick={() => (document.querySelector('[data-value="experience"]') as HTMLElement)?.click()}>
                   Next: Experience
                 </Button>
               </CardFooter>
@@ -465,21 +455,11 @@ export default function CVGenerateForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    const element = document.querySelector('[data-value="education"]');
-                    if (element instanceof HTMLElement) {
-                      element.click();
-                    }
-                  }}
+                  onClick={() => (document.querySelector('[data-value="education"]') as HTMLElement)?.click()}
                 >
                   Previous: Education
                 </Button>
-                <Button type="button" onClick={() => {
-                  const element = document.querySelector('[data-value="skills"]');
-                  if (element instanceof HTMLElement) {
-                    element.click();
-                  }
-                }}>
+                <Button type="button" onClick={() => (document.querySelector('[data-value="skills"]') as HTMLElement)?.click()}>
                   Next: Skills
                 </Button>
               </CardFooter>
@@ -526,10 +506,8 @@ export default function CVGenerateForm() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    const element = document.querySelector('[data-value="experience"]');
-                    if (element instanceof HTMLElement) {
-                      element.click();
-                    }
+                    const experienceTab = document.querySelector('[data-value="experience"]') as HTMLElement | null;
+                    experienceTab?.click();
                   }}
                 >
                   Previous: Experience
