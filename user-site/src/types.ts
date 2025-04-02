@@ -54,12 +54,14 @@ export type detail = {
     benefits: string[]
 }
 
+export type BookmarkStatus = "interested" | "not_interested" | "none"
+
 export type BookmarkType = {
     _id: string
     userId: string | ObjectId
     jobId: string | ObjectId
     job?: JobType	
-    status: "interested" | "not_interested" | "none"
+    status: string
     createdAt: Date
     updatedAt: Date
 }

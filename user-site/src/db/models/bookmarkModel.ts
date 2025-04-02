@@ -7,25 +7,44 @@ class BookmarkModel {
     }
 
     static async create(payload: { userId: string, jobId: string }) {
-        const existing = await this.collection().findOne({
-          userId: new ObjectId(payload.userId),
-          jobId: new ObjectId(payload.jobId),
-        });
+        const userId =  new ObjectId(payload.userId)
+        const jobId = new ObjectId(payload.jobId)
+        
+        const existing = await this.collection().findOne({userId, jobId});
       
-        if (existing) throw { message: "You already added this job vacancy to your bookmark", status: 400 };
-      
+        // if (existing) throw { message: "You already added this job vacancy to your bookmark", status: 400 };
+        
+        if(existing){
+            await this.collection().updateOne(
+                {userId, jobId},
+                {
+                    $set: {
+                        status: "none",
+                        updatedAt: new Date()
+                    }
+                }
+            )
+            return {message: "Bookmark status reset to 'none'"}
+        }
+
         const newBookmark = {
-          userId: new ObjectId(payload.userId),
-          jobId: new ObjectId(payload.jobId),
+          userId,
+          jobId,
+          status: "none" as BookmarkStatus,
           createdAt: new Date(),
           updatedAt: new Date()
         };
-        return await this.collection().insertOne(newBookmark);
-      }
 
-    static async getAll(userId: string) {
-        const jobs = await this.collection().aggregate([
-            { $match: { userId: new ObjectId(userId) } },
+        await this.collection().insertOne(newBookmark);
+        return {message: "Bookmark added successfully"}
+    }
+
+    static async getAll(userId: string, status ?: BookmarkStatus) {
+        const match: any = {userId: new ObjectId(userId)}
+        if(status) match.status = status
+
+        const bookmarks = await this.collection().aggregate([
+            { $match: match },
             {
                 $lookup: {
                     from: "jobs",
@@ -45,10 +64,30 @@ class BookmarkModel {
             }
         ]).toArray();
 
-        return jobs;
+        return bookmarks;
     }
-    static async remove(userId: string, jobId: string) {
-        return await this.collection().deleteOne({ userId: new ObjectId(userId), jobId: new ObjectId(jobId) });
+    
+    static async updateStatus(userId: string, jobId: string, status: BookmarkStatus){
+        const userId = new ObjectId(userId)
+        const jobId = new ObjectId(jobId)
+
+        const res = await this.collection().updateOne(
+            {userId, jobId},
+            { $set: {
+                status,
+                updatedAt: new Date()
+            }}
+        )
+
+        if(res.matchedCount === 0){
+            await this.collection().insertOne({
+                userId, jobId, status,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            })
+
+            return { message: `Bookmark status updated to '${status}'` }
+        }
     }
 }
 
