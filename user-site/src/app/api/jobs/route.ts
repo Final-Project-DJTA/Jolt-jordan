@@ -9,10 +9,12 @@ export async function GET(req:Request) {
         const category = searchParams.get("category")
         const location = searchParams.get("location")
         const salary = searchParams.get("salary")
+        
         if(name){
             const res = await JobModel.searchByName(name)
             return Response.json(res)
         }
+        
         if(category){
             const res = await JobModel.filterJobs({category, location, salary})
             return Response.json(res)
