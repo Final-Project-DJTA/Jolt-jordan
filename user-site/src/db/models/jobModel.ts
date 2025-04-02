@@ -77,6 +77,33 @@ class JobModel {
             _id: job._id.toString()
         }))
     }
+
+    static async applyJob(userId: string, jobId: string){
+        const userCollection = database.collection<UserType>("User")
+        const jobObjId = new ObjectId(jobId)
+
+        const user = await userCollection.findOne({_id: new ObjectId(userId)})
+        if(!user) throw {message: "User not found", status: 404}
+
+        const profile = user.profile
+        const isIncomplete = !profile?.avatar || !profile?.location || !profile?.bio || !profile?.resume || !profile?.skills || profile.skills.length === 0
+
+        if(isIncomplete){
+            throw {message: "Please complete your profile before applying", status: 400}
+        }
+
+        const alreadyApplied = user.profile?.appliedJobs?.includes(jobId)
+        if(alreadyApplied){
+            throw {message: "You have already applied to this job", status: 409}
+        }
+
+        await userCollection.updateOne(
+            {_id: new ObjectId(userId)},
+            {$addToSet: {"profile.appliedJobs": jobId}}
+        )
+
+        return { message: "Application successful!"}
+    }
 }
 
 export default JobModel
