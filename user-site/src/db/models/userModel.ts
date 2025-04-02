@@ -1,4 +1,4 @@
-import { hashPassword } from "@/app/helpers/bcrypt";
+import { hashPassword, comparePassword} from "@/app/helpers/bcrypt";
 import { database } from "../config/mongodb";
 import { z } from "zod";
 import { UserType } from "@/types";
@@ -58,6 +58,22 @@ class UserModel {
         // payload.password = hashPassword(payload.password);
         await this.collection().insertOne(newUser);
         return "Register Success"
+    }
+
+    static async login(email: string, password: string){
+        const user = await this.collection().findOne({email})
+        if(!user) throw { message: "Invalid email or password", status: 401}
+
+        const isValid = comparePassword(password, user.password)
+        if(!isValid) throw { message: "Invalid email or password", status: 401}
+
+        return{
+            message: "Login successful!",
+            userId: user._id,
+            name: user.name,
+            username: user.username,
+            email: user.email
+        }
     }
 }
 
