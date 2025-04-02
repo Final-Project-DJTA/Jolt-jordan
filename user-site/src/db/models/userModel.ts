@@ -88,7 +88,7 @@ class UserModel {
         ProfileSchema.parse(profileData)
 
         const updateData: any = {}
-        Object.entries(profileData).forEach(([Key, value]) => {
+        Object.entries(profileData).forEach(([key, value]) => {
             updateData[`profile.${key}`] = value
         })
 
@@ -106,3 +106,7 @@ class UserModel {
 }
 
 export default UserModel;
+
+/**
+ * buatkan api untuk tiap tiap function diatas
+ */

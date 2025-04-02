@@ -9,7 +9,13 @@ export async function middleware(request: NextRequest) {
     const cookieStore = await cookies()
     const auth = cookieStore.get("Authorization")?.value
 
-    if(request.nextUrl.pathname.startsWith("/api/bookmarks")){
+    const isBookmarkAPI = request.nextUrl.pathname.startsWith("/api/bookmarks")
+    const isBookmarkPage = request.nextUrl.pathname.startsWith("/bookmarks")
+    const isApplyJob = request.nextUrl.pathname === "/api/jobs" && request.method === "POST"
+
+    const needsAuth = isBookmarkAPI || isBookmarkPage || isApplyJob
+
+    if(needsAuth){
         try{
             if(!auth) throw {message: "Please login first", status: 401}
 
@@ -32,13 +38,14 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    if(request.nextUrl.pathname.startsWith("/bookmarks")){
-        if(!auth){
+    if(isBookmarkPage && !auth){
             return NextResponse.redirect(new URL ("/login", request.nextUrl))
-        }
     }
+
+    return NextResponse.next()
 }
 
 export const config = {
-    matcher: ["/api/bookmarks/:path*", "/bookmarks"]
+    matcher: ["/api/bookmarks/:path*", "/bookmarks", "/api/jobs", "/api/users/profile"]
 }
+
