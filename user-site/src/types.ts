@@ -59,6 +59,7 @@ export type BookmarkType = {
     userId: string | ObjectId
     jobId: string | ObjectId
     job?: JobType	
+    status: "interested" | "not_interested" | "none"
     createdAt: Date
     updatedAt: Date
 }
