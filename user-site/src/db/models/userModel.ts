@@ -75,6 +75,14 @@ class UserModel {
             email: user.email
         }
     }
+
+    static async getProfile(userId: string){
+        const user = await this.collection().findOne({_id: new ObjectId(userId)})
+
+        if(!user) throw { message: "User not found", status: 404 }
+        const {password, ...safeData} = user
+        return safeData
+    }
 }
 
 export default UserModel;
