@@ -106,3 +106,7 @@ class UserModel {
 }
 
 export default UserModel;
+
+/**
+ * buatkan api untuk tiap tiap function diatas
+ */
