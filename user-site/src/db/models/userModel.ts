@@ -83,6 +83,26 @@ class UserModel {
         const {password, ...safeData} = user
         return safeData
     }
+
+    static async editProfile(userId: string, profileData: Partial<UserType["profile"]>){
+        ProfileSchema.parse(profileData)
+
+        const updateData: any = {}
+        Object.entries(profileData).forEach(([Key, value]) => {
+            updateData[`profile.${key}`] = value
+        })
+
+        const result = await this.collection().updateOne(
+            {_id: new ObjectId(userId)},
+            {$set: updateData}
+        )
+
+        if(result.matchedCount === 0){
+            throw {message: "User not found", status: 404}
+        }
+
+        return "Profile updated successfully"
+    }
 }
 
 export default UserModel;
