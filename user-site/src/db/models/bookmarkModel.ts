@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { database } from "../config/mongodb";
+import { BookmarkStatus } from "@/types";
 
 class BookmarkModel {
     static collection() {
@@ -7,16 +8,16 @@ class BookmarkModel {
     }
 
     static async create(payload: { userId: string, jobId: string }) {
-        const userId =  new ObjectId(payload.userId)
-        const jobId = new ObjectId(payload.jobId)
+        const userObjId =  new ObjectId(payload.userId)
+        const jobObjId = new ObjectId(payload.jobId)
         
-        const existing = await this.collection().findOne({userId, jobId});
+        const existing = await this.collection().findOne({userObjId, jobObjId});
       
         // if (existing) throw { message: "You already added this job vacancy to your bookmark", status: 400 };
         
         if(existing){
             await this.collection().updateOne(
-                {userId, jobId},
+                {userId: userObjId, jobId: jobObjId},
                 {
                     $set: {
                         status: "none",
@@ -28,8 +29,8 @@ class BookmarkModel {
         }
 
         const newBookmark = {
-          userId,
-          jobId,
+          userObjId,
+          jobObjId,
           status: "none" as BookmarkStatus,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -68,8 +69,8 @@ class BookmarkModel {
     }
     
     static async updateStatus(userId: string, jobId: string, status: BookmarkStatus){
-        const userId = new ObjectId(userId)
-        const jobId = new ObjectId(jobId)
+        const userObjectId = new ObjectId(userId)
+        const jobObjectId = new ObjectId(jobId)
 
         const res = await this.collection().updateOne(
             {userId, jobId},
@@ -81,7 +82,7 @@ class BookmarkModel {
 
         if(res.matchedCount === 0){
             await this.collection().insertOne({
-                userId, jobId, status,
+                userId: userObjectId, jobId: jobObjectId, status,
                 createdAt: new Date(),
                 updatedAt: new Date()
             })

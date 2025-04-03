@@ -50,7 +50,8 @@ class UserModel {
         const newUser = {
             ...payload,
             password: hashPassword(payload.password),
-            profile: {}
+            profile: {},
+            phoneNumber: payload.phoneNumber || ""
             // createdAt: new Date(),
             // updatedAt: new Date()
         }
@@ -88,10 +89,11 @@ class UserModel {
         ProfileSchema.parse(profileData)
 
         const updateData: any = {}
-        Object.entries(profileData).forEach(([key, value]) => {
+        if (profileData) {
+            Object.entries(profileData).forEach(([key, value]) => {
             updateData[`profile.${key}`] = value
         })
-
+        }
         const result = await this.collection().updateOne(
             {_id: new ObjectId(userId)},
             {$set: updateData}
@@ -107,6 +109,3 @@ class UserModel {
 
 export default UserModel;
 
-/**
- * buatkan api untuk tiap tiap function diatas
- */
