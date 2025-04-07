@@ -1,9 +1,10 @@
 import { hashPassword, comparePassword } from "@/helpers/bcrypt";
 import { database } from "../config/mongodb";
 import { z } from "zod";
-import { UserType } from "@/types";
 import { ObjectId } from "mongodb";
-import { RollerCoaster } from "lucide-react";
+import ProfileModel from "./profileModel";
+
+// Remove ProfileSchema as it's now in ProfileModel
 
 const UserSchema = z.object({
   name: z.string(),
@@ -18,16 +19,6 @@ const UserSchema = z.object({
     .min(5, { message: "Password must contain at least 5 character(s)" }),
 });
 
-const ProfileSchema = z.object({
-  avatar: z.string().optional(),
-  location: z.string().optional(),
-  bio: z.string().optional(),
-  resume: z.string().optional(),
-  skills: z.array(z.string()).optional(),
-  appliedJobs: z.array(z.string()).optional(),
-  savedJobs: z.array(z.string()).optional(),
-});
-
 type NewUser = {
   name: string;
   username: string;
@@ -37,33 +28,46 @@ type NewUser = {
   role: string;
 };
 
+// Update UserType in types.ts as well
+
 class UserModel {
   static collection() {
-    return database.collection<UserType>("User");
+    return database.collection("User");
   }
 
   static async create(payload: NewUser) {
-    UserSchema.parse(payload);
-    const user = await this.collection().findOne({
-      $or: [{ username: payload.username }, { email: payload.email }],
-    });
+    try {
+      UserSchema.parse(payload);
+      const user = await this.collection().findOne({
+        $or: [{ username: payload.username }, { email: payload.email }],
+      });
 
-    if (user)
-      throw { message: "Username or email already exists", status: 400 };
+      if (user) throw { message: "Username or email already exists", status: 400 };
 
-    const newUser = {
-      ...payload,
-      password: hashPassword(payload.password),
-      profile: {},
-      role: "user",
-      telegramId: "",
-      // createdAt: new Date(),
-      // updatedAt: new Date()
-    };
+      const newUser = {
+        ...payload,
+        password: hashPassword(payload.password),
+        role: payload.role || "user",
+        telegramId: payload.telegramId || "",
+      };
 
-    // payload.password = hashPassword(payload.password);
-    await this.collection().insertOne(newUser);
-    return "Register Success";
+      const result = await this.collection().insertOne(newUser);
+      
+      // Create a profile for the new user
+      try {
+        await ProfileModel.create(result.insertedId.toString());
+        console.log(`Profile created for user ID: ${result.insertedId}`);
+      } catch (error) {
+        console.error("Failed to create profile:", error);
+        // Don't fail user creation if profile fails
+        // You could also choose to delete the user if profile creation fails
+      }
+      
+      return "Register Success";
+    } catch (error) {
+      console.error("Error in user creation:", error);
+      throw error;
+    }
   }
 
   static async login(email: string, password: string) {
@@ -90,29 +94,8 @@ class UserModel {
     return safeData;
   }
 
-  static async editProfile(
-    userId: string,
-    profileData: Partial<UserType["profile"]>
-  ) {
-    ProfileSchema.parse(profileData);
-
-    const updateData: any = {};
-    if (profileData) {
-      Object.entries(profileData).forEach(([key, value]) => {
-        updateData[`profile.${key}`] = value;
-      });
-    }
-    const result = await this.collection().updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: updateData }
-    );
-
-    if (result.matchedCount === 0) {
-      throw { message: "User not found", status: 404 };
-    }
-
-    return "Profile updated successfully";
-  }
+  // Remove editProfile method that updates embedded profile
+  // It's now handled by ProfileModel.update
 
   static async findByEmail(email: string) {
     const user = await this.collection().findOne({ email });

@@ -6,46 +6,96 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-    const cookieStore = await cookies()
-    const auth = cookieStore.get("Authorization")?.value
+    // Handle CORS preflight requests
+    if (request.method === "OPTIONS") {
+        return new NextResponse(null, {
+            status: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                "Access-Control-Max-Age": "86400",
+            },
+        });
+    }
 
-    const isBookmarkAPI = request.nextUrl.pathname.startsWith("/api/bookmarks")
-    const isBookmarkPage = request.nextUrl.pathname.startsWith("/bookmarks")
-    const isApplyJob = request.nextUrl.pathname === "/api/jobs" && request.method === "POST"
+    const cookieStore = request.cookies; // Note: Using NextRequest cookies directly
+    const auth = cookieStore.get("Authorization")?.value;
 
-    const needsAuth = isBookmarkAPI || isBookmarkPage || isApplyJob
+    // Debug info
+    console.log("Request path:", request.nextUrl.pathname);
+    console.log("Auth cookie present:", !!auth);
+    if (auth) console.log("Auth cookie prefix:", auth.substring(0, 10) + "...");
+
+    const isBookmarkAPI = request.nextUrl.pathname.startsWith("/api/bookmarks");
+    const isBookmarkPage = request.nextUrl.pathname.startsWith("/bookmarks");
+    const isApplyJob = request.nextUrl.pathname === "/api/jobs" && request.method === "POST";
+    const isProfileAPI = request.nextUrl.pathname === "/api/profile";
+
+    const needsAuth = isBookmarkAPI || isBookmarkPage || isApplyJob || isProfileAPI;
+    console.log("Needs auth:", needsAuth);
 
     if(needsAuth){
         try{
-            if(!auth) throw {message: "Please login first", status: 401}
+            if(!auth) {
+                console.log("No auth cookie found");
+                throw {message: "Please login first", status: 401};
+            }
 
-            const [type, token] = auth?.split(" ")
-            if(type !== "Bearer") throw {message: "Invalid token", status: 401}
+            const [type, token] = auth?.split(" ");
+            console.log("Token type:", type);
+            
+            if(type !== "Bearer") {
+                console.log("Invalid token type");
+                throw {message: "Invalid token", status: 401};
+            }
 
-            const decoded = await verifyWithJose<{_id: string}>(token)
+            try {
+                const decoded = await verifyWithJose<{_id: string}>(token);
+                console.log("Token successfully verified for user:", decoded._id);
+                
+                const requestHeaders = new Headers(request.headers);
+                requestHeaders.set("x-user-id", decoded._id);
 
-            const requstHeaders = new Headers(request.headers)
-            requstHeaders.set("x-user-id", decoded._id)
+                const response = NextResponse.next({
+                    request: {
+                        headers: requestHeaders
+                    },
+                });
 
-            const response = NextResponse.next({
-                request: {
-                    headers: requstHeaders
-                },
-            })
-            return response
-        }catch(error){
-            return errHandler(error as CustomError)
+                response.headers.set("Access-Control-Allow-Origin", "*");
+                response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+                response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+                
+                return response;
+            } catch (joseError) {
+                console.log("Token verification failed:", joseError);
+                throw {message: "Invalid token", status: 401};
+            }
+        } catch(error){
+            console.log("Auth error:", error);
+            const errorResponse = errHandler(error as CustomError);
+            errorResponse.headers.set("Access-Control-Allow-Origin", "*");
+            return errorResponse;
         }
     }
 
-    if(isBookmarkPage && !auth){
-            return NextResponse.redirect(new URL ("/login", request.nextUrl))
-    }
-
-    return NextResponse.next()
+    // For all other requests, add CORS headers
+    const response = NextResponse.next();
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    
+    return response;
 }
 
 export const config = {
-    matcher: ["/api/bookmarks/:path*", "/bookmarks", "/api/jobs", "/api/users/profile"]
+    matcher: [
+        "/api/profile",
+        "/api/bookmarks/:path*",
+        "/api/jobs", 
+        "/bookmarks",
+        "/profile/:path*"  // Added this to protect all profile routes
+    ]
 }
 

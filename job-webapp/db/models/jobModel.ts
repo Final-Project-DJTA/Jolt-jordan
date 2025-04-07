@@ -1,6 +1,7 @@
 import { database } from "../config/mongodb"
 import { ObjectId } from "mongodb"
 import { UserType } from "@/types"
+import ProfileModel from "@/db/models/profileModel"
 
 class JobModel {
     static collection() {
@@ -78,31 +79,37 @@ class JobModel {
         }))
     }
 
+    // In the applyJob method, update to use ProfileModel
+
     static async applyJob(userId: string, jobId: string){
-        const userCollection = database.collection<UserType>("User")
-        const jobObjId = new ObjectId(jobId)
-
-        const user = await userCollection.findOne({_id: new ObjectId(userId)})
-        if(!user) throw {message: "User not found", status: 404}
-
-        const profile = user.profile
-        const isIncomplete = !profile?.avatar || !profile?.location || !profile?.bio || !profile?.resume || !profile?.skills || profile.skills.length === 0
-
+        const userCollection = database.collection("User");
+        const jobObjId = new ObjectId(jobId);
+        
+        // Check if user exists
+        const user = await userCollection.findOne({_id: new ObjectId(userId)});
+        if(!user) throw {message: "User not found", status: 404};
+        
+        // Get profile from ProfileModel
+        const profile = await ProfileModel.findByUserId(userId);
+        if(!profile) throw {message: "Profile not found", status: 404};
+        
+        // Check if profile is complete
+        const isIncomplete = !profile.avatar || !profile.location || !profile.bio || !profile.skills || profile.skills.length === 0;
+        
         if(isIncomplete){
-            throw {message: "Please complete your profile before applying", status: 400}
+            throw {message: "Please complete your profile before applying", status: 400};
         }
-
-        const alreadyApplied = user.profile?.appliedJobs?.includes(jobId)
+        
+        // Check if already applied
+        const alreadyApplied = profile.appliedJobs?.includes(jobId);
         if(alreadyApplied){
-            throw {message: "You have already applied to this job", status: 409}
+            throw {message: "You have already applied to this job", status: 409};
         }
-
-        await userCollection.updateOne(
-            {_id: new ObjectId(userId)},
-            {$addToSet: {"profile.appliedJobs": jobId}}
-        )
-
-        return { message: "Application successful!"}
+        
+        // Add job to applied jobs in profile
+        await ProfileModel.addAppliedJob(userId, jobId);
+        
+        return { message: "Application successful!"};
     }
 }
 

@@ -18,7 +18,10 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
       <Avatar className="h-24 w-24">
-        <AvatarImage src={user.profile?.avatar} alt={user.name} />
+        {/* Only render AvatarImage if avatar is not empty */}
+        {user.profile?.avatar ? (
+          <AvatarImage src={user.profile.avatar} alt={user.name} />
+        ) : null}
         <AvatarFallback className="text-2xl bg-primary text-primary-foreground">{initials}</AvatarFallback>
       </Avatar>
 

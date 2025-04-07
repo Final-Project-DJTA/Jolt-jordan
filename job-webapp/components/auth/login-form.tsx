@@ -1,8 +1,7 @@
 "use client";
 
-import type React from "react";
-
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,39 +17,47 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
 export default function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  console.log(formData.email, formData.password);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    setIsLoading(true);
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
     try {
-      const res = await fetch("http://localhost:3000/api/login", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
+      const response = await fetch(`${apiUrl}/login`, {
         method: "POST",
-        body: JSON.stringify(formData),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email, password }),
+        credentials: "include", // Required to accept and store cookies
       });
-      const responseData = await res.json();
-      if (!res.ok) {
-        throw responseData;
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Login failed");
       }
-      console.log(responseData);
-      window.location.href = "/";
+
+      // Login successful - retrieve response data
+      const data = await response.json();
+      console.log("Login successful:", data);
+
+      // The cookie should be automatically stored by the browser
+      // No need to manually extract it - just redirect
+      router.push("/dashboard");
+      // Use replace to prevent back navigation to login
+      // router.replace("/dashboard");
     } catch (error) {
-      console.log(error);
+      console.error("Login error:", error);
+      setError(error.message || "Failed to login");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -61,7 +68,7 @@ export default function LoginForm() {
 
   return (
     <Card className="border-primary/20">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <CardHeader>
           <CardTitle className="text-xl">Sign In</CardTitle>
           <CardDescription>
@@ -77,8 +84,8 @@ export default function LoginForm() {
               type="email"
               placeholder="john.doe@example.com"
               required
-              value={formData.email}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
@@ -89,8 +96,8 @@ export default function LoginForm() {
               name="password"
               type="password"
               required
-              value={formData.password}
-              onChange={handleChange}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <div className="text-right">
               <Link
@@ -102,12 +109,14 @@ export default function LoginForm() {
             </div>
           </div>
 
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90"
-            disabled={isLoading}
+            disabled={loading}
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {loading ? "Logging in..." : "Login"}
           </Button>
 
           <div className="relative my-4">

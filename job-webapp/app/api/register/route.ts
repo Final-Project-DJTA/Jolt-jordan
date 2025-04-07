@@ -6,21 +6,23 @@ export async function POST(req: Request) {
   try {
     const { name, email, username, password, telegramId, role } =
       await req.json();
-    console.log(name, email, username, password, telegramId, role);
+    console.log("Registering new user:", name, email, username);
 
-    await UserModel.create({
+    const result = await UserModel.create({
       name,
       email,
       username,
       password,
       telegramId,
-      role,
+      role: role || "user",
     });
+    
     return Response.json(
-      { message: "Registration successfull" },
+      { message: "Registration successful" },
       { status: 201 }
     );
   } catch (error) {
+    console.error("Registration error:", error);
     return errHandler(error as CustomError);
   }
 }
