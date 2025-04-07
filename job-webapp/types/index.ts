@@ -1,64 +1,3 @@
-// export type UserType = {
-//   name: string
-//   email: string
-//   phoneNumber: string
-//   username: string
-//   password: string
-//   profile?: Profile
-// }
-
-// export type Profile = {
-//   avatar?: string
-//   location?: string
-//   bio?: string
-//   resume?: string
-//   skills?: string[]
-//   appliedJobs?: string[]
-//   savedJobs?: string[]
-// }
-
-// export type JobType = {
-//   _id: string
-//   name: string
-//   slug: string
-//   location: string
-//   category: string
-//   salary: string
-//   description: string
-//   excerpt: string
-//   company: Company
-//   detail: Detail
-//   createdAt: Date
-//   updatedAt: Date
-// }
-
-// export type Company = {
-//   name: string
-//   industry: string
-//   size: string
-//   website: string
-//   headquarters: string
-//   logo: string
-// }
-
-// export type Detail = {
-//   responsibilities: string[]
-//   requirements: string[]
-//   benefits: string[]
-// }
-
-// // Import ObjectId from mongodb
-// import { ObjectId } from 'mongodb';
-
-// export type BookmarkType = {
-//   _id: string
-//   userId: string | ObjectId
-//   jobId: string | ObjectId
-//   job?: JobType
-//   createdAt: Date
-//   updatedAt: Date
-// }
-
 import { ObjectId } from "mongodb";
 
 export type CustomError = {
@@ -67,22 +6,27 @@ export type CustomError = {
 }
 
 export type UserType = {
-    name: string;
-    email: string;
-    phoneNumber: string
-    username: string;
-    password: string;
-    profile?: profile;
+  _id?: string;
+  name: string;
+  email: string;
+  username: string;
+  password?: string; // Optional since we don't return password in responses
+  telegramId?: string;
+  telegramVerified?: boolean;
+  role?: string;
+  verificationToken?: string;
+  tokenExpires?: Date;
 }
 
-export type profile = {
-    avatar?: string;
-    location?: string;
-    bio?: string
-    resume?: string;
-    skills?: string[];
-    appliedJobs?: string[];
-    savedJobs?: string[];
+export type ProfileType = {
+  userId: string;
+  avatar?: string;
+  location?: string;
+  bio?: string;
+  skills?: string[];
+  tags?: string[];
+  appliedJobs?: string[];
+  savedJobs?: string[];
 }
 
 export type JobType = {	

@@ -5,30 +5,92 @@ import ProfileHeader from "@/components/profile/profile-header"
 import ProfileTabs from "@/components/profile/profile-tabs"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 export default function ProfilePage() {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     setIsLoaded(true)
-  }, [])
+    
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("/api/profile", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Make sure this is added
+        })
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push("/login")
+            return
+          }
+          throw new Error("Failed to fetch profile")
+        }
+        
+        const userData = await response.json()
+        // Make sure the data structure is consistent with what components expect
+        if (userData && !userData.profile && userData._id) {
+          // If we get separated user and profile data, restructure it
+          const { _id, name, email, username, ...profileData } = userData;
+          setUser({
+            _id,
+            name, 
+            email,
+            username,
+            profile: profileData // Put the rest of the data in profile
+          })
+        } else {
+          // Data already has the right structure
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error)
+        // Use fallback mock data if needed
+        setUser({
+          name: "User",
+          email: "user@example.com",
+          username: "user",
+          profile: {
+            avatar: "/placeholder.svg?height=100&width=100",
+            location: "",
+            bio: "",
+            skills: [],
+            tags: [],
+            appliedJobs: [],
+            savedJobs: [],
+          }
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchProfile()
+  }, [router])
 
-  // Mock user data - in a real app, this would come from your database
-  const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1 (555) 123-4567",
-    username: "johndoe",
+  // Use the fetched user data or fall back to mock data if still loading
+  const userData = user || {
+    name: "Loading...",
+    email: "",
+    username: "",
     profile: {
       avatar: "/placeholder.svg?height=100&width=100",
-      location: "New York, NY",
-      bio: "Experienced software developer with a passion for creating user-friendly applications.",
-      skills: ["JavaScript", "React", "Node.js", "TypeScript"],
+      location: "",
+      bio: "",
+      skills: [],
+      tags: [],
       appliedJobs: [],
       savedJobs: [],
     },
   }
 
+  // Make sure both components get the data they expect
   return (
     <div className="container mx-auto py-12">
       {isLoaded && (
@@ -45,13 +107,19 @@ export default function ProfilePage() {
             whileHover={{ rotate: 10, scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" />
+            {/* Add conditional rendering to avoid empty src */}
+            <Image 
+              src="/images/logo.svg" 
+              alt="Jolt Jordan Logo" 
+              fill 
+              className="object-contain" 
+            />
           </motion.div>
         </motion.div>
       )}
-      <ProfileHeader user={user} />
+      <ProfileHeader user={userData} />
       <div className="mt-8">
-        <ProfileTabs user={user} />
+        <ProfileTabs user={userData} />
       </div>
     </div>
   )
