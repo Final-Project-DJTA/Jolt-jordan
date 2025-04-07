@@ -11,7 +11,7 @@ class BookmarkModel {
         const userObjId =  new ObjectId(payload.userId)
         const jobObjId = new ObjectId(payload.jobId)
         
-        const existing = await this.collection().findOne({userObjId, jobObjId});
+        const existing = await this.collection().findOne({userId: userObjId, jobId: jobObjId});
       
         // if (existing) throw { message: "You already added this job vacancy to your bookmark", status: 400 };
         

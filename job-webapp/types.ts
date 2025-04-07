@@ -57,11 +57,3 @@ export type detail = {
 export type BookmarkStatus = "interested" | "not_interested" | "none";
 
 export type BookmarkType = {
-  _id: string;
-  userId: string | ObjectId;
-  jobId: string | ObjectId;
-  job?: JobType;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
