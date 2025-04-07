@@ -1,57 +1,72 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 export default function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
+  });
+  console.log(formData.email, formData.password);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
+    setIsLoading(true);
+    e.preventDefault();
     try {
-      // Here you would typically send the data to your API
-      console.log("Login form submitted:", formData)
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Redirect to profile page after successful login
-      window.location.href = "/profile"
+      const res = await fetch("http://localhost:3000/api/login", {
+        method: "POST",
+        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const responseData = await res.json();
+      if (!res.ok) {
+        throw responseData;
+      }
+      console.log(responseData);
+      window.location.href = "/";
     } catch (error) {
-      console.error("Login error:", error)
+      console.log(error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = () => {
     // Implement Google sign-in logic
-    console.log("Google sign-in clicked")
-  }
+    console.log("Google sign-in clicked");
+  };
 
   return (
     <Card className="border-primary/20">
       <form onSubmit={handleSubmit}>
         <CardHeader>
           <CardTitle className="text-xl">Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -78,13 +93,20 @@ export default function LoginForm() {
               onChange={handleChange}
             />
             <div className="text-right">
-              <Link href="/forgot-password" className="text-sm text-secondary hover:underline">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-secondary hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-primary hover:bg-primary/90"
+            disabled={isLoading}
+          >
             {isLoading ? "Signing In..." : "Sign In"}
           </Button>
 
@@ -95,7 +117,12 @@ export default function LoginForm() {
             </span>
           </div>
 
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleSignIn}
+          >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -120,13 +147,15 @@ export default function LoginForm() {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-gray-600">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-secondary font-medium hover:underline">
+            <Link
+              href="/register"
+              className="text-secondary font-medium hover:underline"
+            >
               Sign up
             </Link>
           </p>
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }
-
