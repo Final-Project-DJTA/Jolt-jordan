@@ -17,9 +17,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import type { UserType } from "@/types";
+import { toast } from "@/components/ui/use-toast";
 
 export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const [formData, setFormData] = useState<Partial<UserType>>({
     name: "",
     username: "",
@@ -37,15 +39,33 @@ export default function RegisterForm() {
     setIsLoading(true);
 
     try {
-      // Here you would typically send the data to your API
-      console.log("Form submitted:", formData);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Send data to your API
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      // Redirect to login page after successful registration
-      window.location.href = "/login";
-    } catch (error) {
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Registration failed');
+      }
+
+      // Show success message and telegram link
+      setRegistrationComplete(true);
+      toast({
+        title: "Registration successful!",
+        description: "Please connect your Telegram account for notifications.",
+      });
+    } catch (error: any) {
       console.error("Registration error:", error);
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +75,44 @@ export default function RegisterForm() {
     // Implement Google sign-in logic
     console.log("Google sign-in clicked");
   };
+
+  if (registrationComplete) {
+    return (
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-xl">Registration Complete!</CardTitle>
+          <CardDescription>
+            Connect your Telegram account to receive job notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-center">
+          <p>
+            You've successfully registered! To receive job notifications and updates,
+            please connect your Telegram account.
+          </p>
+          
+          <Button
+            onClick={() => window.location.href = "https://t.me/joltJordan_bot"}
+            className="w-full bg-primary hover:bg-primary/90 mt-4"
+          >
+            Connect with Telegram
+          </Button>
+          
+          <p className="text-sm text-gray-500 mt-4">
+            You can also connect your account later from your profile settings.
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = "/login"}
+          >
+            Proceed to Login
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-primary/20">

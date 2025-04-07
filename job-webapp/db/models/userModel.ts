@@ -113,6 +113,83 @@ class UserModel {
 
     return "Profile updated successfully";
   }
+
+  static async findByEmail(email: string) {
+    const user = await this.collection().findOne({ email });
+    return user;
+  }
+
+  static async updateTelegramId(email: string, telegramId: string, verified: boolean = false) {
+    const user = await this.findByEmail(email);
+    
+    if (!user) throw { message: "User not found", status: 404 };
+    
+    const result = await this.collection().updateOne(
+      { email },
+      { $set: { telegramId, telegramVerified: verified } }
+    );
+
+    if (result.matchedCount === 0) {
+      throw { message: "User not found", status: 404 };
+    }
+
+    return "Telegram ID updated successfully";
+  }
+
+  static async verifyTelegramId(userId: string) {
+    const result = await this.collection().updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { telegramVerified: true } }
+    );
+
+    if (result.matchedCount === 0) {
+      throw { message: "User not found", status: 404 };
+    }
+
+    return "Telegram ID verified successfully";
+  }
+
+  static async generateVerificationToken(userId: string) {
+    // Generate a random token
+    const token = Math.random().toString(36).substring(2, 15) + 
+                  Math.random().toString(36).substring(2, 15);
+    
+    const result = await this.collection().updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { verificationToken: token, tokenExpires: new Date(Date.now() + 24*60*60*1000) } } // Token valid for 24 hours
+    );
+
+    if (result.matchedCount === 0) {
+      throw { message: "User not found", status: 404 };
+    }
+
+    return token;
+  }
+
+  static async verifyTokenAndUpdateTelegramId(token: string, telegramId: string) {
+    const user = await this.collection().findOne({ 
+      verificationToken: token,
+      tokenExpires: { $gt: new Date() }
+    });
+
+    if (!user) throw { message: "Invalid or expired token", status: 400 };
+
+    const result = await this.collection().updateOne(
+      { _id: user._id },
+      { 
+        $set: { 
+          telegramId: telegramId,
+          telegramVerified: true 
+        },
+        $unset: { 
+          verificationToken: "",
+          tokenExpires: "" 
+        }
+      }
+    );
+
+    return "Telegram ID verified successfully";
+  }
 }
 
 export default UserModel;
