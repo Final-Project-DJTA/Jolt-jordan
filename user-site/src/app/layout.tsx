@@ -1,67 +1,35 @@
-// import type React from "react"
-// import type { Metadata } from "next"
-// import { Inter } from "next/font/google"
-// import "./globals.css"
-// import { ThemeProvider } from "@/components/theme-provider"
-// import Navbar from "@/components/navbar"
 
-// const inter = Inter({ subsets: ["latin"] })
+  export const dynamic = "force-dynamic"
 
-// export const metadata: Metadata = {
-//   title: "JobHub - Find Your Dream Job",
-//   description: "A platform to find and apply for jobs",
-// }
+  import type React from "react"
+  import type { Metadata } from "next"
+  import { Inter } from "next/font/google"
+  import "./globals.css"
+  import { ThemeProvider } from "@/components/theme-provider"
+  import Navbar from "@/components/navbar"
+  import ClientWrapper from "@/components/client-wrapper"
 
-// export default function RootLayout({
-//   children,
-// }: Readonly<{
-//   children: React.ReactNode
-// }>) {
-//   return (
-//     <html lang="en">
-//       <body className={inter.className}>
-//         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-//           <Navbar />
-//           <main className="min-h-screen">{children}</main>
-//         </ThemeProvider>
-//       </body>
-//     </html>
-//   )
-// }
-export const dynamic = "force-dynamic"
+  const inter = Inter({ subsets: ["latin"] })
 
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import Navbar from "@/components/navbar"
-import CursorEffect from "@/components/ui/cursor-effect"
-import JobAlert from "@/components/ui/job-alert"
+  export const metadata: Metadata = {
+    title: "Jolt Jordan - Find Your Dream Job",
+    description: "A platform to find and apply for jobs",
+  }
 
-const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "Jolt Jordan - Find Your Dream Job",
-  description: "A platform to find and apply for jobs",
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
+  export default function RootLayout({
+    children,
+  }: {
+    children: React.ReactNode
+  }) {
+    return (
+      <html lang="en" suppressHydrationWarning>
+        <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <CursorEffect />
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <JobAlert />
-        </ThemeProvider>
-      </body>
-    </html>
-  )
-}
-
+            <Navbar />
+            <main className="min-h-screen">{children}</main>
+            <ClientWrapper />
+          </ThemeProvider>
+        </body>
+      </html>
+    )
+  }
