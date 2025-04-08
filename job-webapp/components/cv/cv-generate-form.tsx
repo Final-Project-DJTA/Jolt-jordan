@@ -1,19 +1,27 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileText, Plus, Trash2, Download } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Plus, Trash2, Download } from "lucide-react";
 
 export default function CVGenerateForm() {
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isGenerated, setIsGenerated] = useState(false)
+  const [activeTab, setActiveTab] = useState("personal");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerated, setIsGenerated] = useState(false);
   const [personalInfo, setPersonalInfo] = useState({
     fullName: "",
     email: "",
@@ -22,102 +30,152 @@ export default function CVGenerateForm() {
     linkedin: "",
     website: "",
     summary: "",
-  })
+  });
 
   const [education, setEducation] = useState([
-    { degree: "", institution: "", location: "", startDate: "", endDate: "", description: "" },
-  ])
+    {
+      degree: "",
+      institution: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    },
+  ]);
 
   const [experience, setExperience] = useState([
-    { title: "", company: "", location: "", startDate: "", endDate: "", description: "" },
-  ])
+    {
+      title: "",
+      company: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    },
+  ]);
 
-  const [skills, setSkills] = useState([""])
+  const [skills, setSkills] = useState([""]);
 
-  const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setPersonalInfo((prev) => ({ ...prev, [name]: value }))
-  }
+  const handlePersonalInfoChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setPersonalInfo((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleEducationChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    const newEducation = [...education]
-    newEducation[index] = { ...newEducation[index], [name]: value }
-    setEducation(newEducation)
-  }
+  const handleEducationChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    const newEducation = [...education];
+    newEducation[index] = { ...newEducation[index], [name]: value };
+    setEducation(newEducation);
+  };
 
-  const handleExperienceChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    const newExperience = [...experience]
-    newExperience[index] = { ...newExperience[index], [name]: value }
-    setExperience(newExperience)
-  }
+  const handleExperienceChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    const newExperience = [...experience];
+    newExperience[index] = { ...newExperience[index], [name]: value };
+    setExperience(newExperience);
+  };
 
   const handleSkillChange = (index: number, value: string) => {
-    const newSkills = [...skills]
-    newSkills[index] = value
-    setSkills(newSkills)
-  }
+    const newSkills = [...skills];
+    newSkills[index] = value;
+    setSkills(newSkills);
+  };
 
   const addEducation = () => {
     setEducation([
       ...education,
-      { degree: "", institution: "", location: "", startDate: "", endDate: "", description: "" },
-    ])
-  }
+      {
+        degree: "",
+        institution: "",
+        location: "",
+        startDate: "",
+        endDate: "",
+        description: "",
+      },
+    ]);
+  };
 
   const removeEducation = (index: number) => {
     if (education.length > 1) {
-      setEducation(education.filter((_, i) => i !== index))
+      setEducation(education.filter((_, i) => i !== index));
     }
-  }
+  };
 
   const addExperience = () => {
     setExperience([
       ...experience,
-      { title: "", company: "", location: "", startDate: "", endDate: "", description: "" },
-    ])
-  }
+      {
+        title: "",
+        company: "",
+        location: "",
+        startDate: "",
+        endDate: "",
+        description: "",
+      },
+    ]);
+  };
 
   const removeExperience = (index: number) => {
     if (experience.length > 1) {
-      setExperience(experience.filter((_, i) => i !== index))
+      setExperience(experience.filter((_, i) => i !== index));
     }
-  }
+  };
 
   const addSkill = () => {
-    setSkills([...skills, ""])
-  }
+    setSkills([...skills, ""]);
+  };
 
   const removeSkill = (index: number) => {
     if (skills.length > 1) {
-      setSkills(skills.filter((_, i) => i !== index))
+      setSkills(skills.filter((_, i) => i !== index));
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsGenerating(true)
+    e.preventDefault();
+    setIsGenerating(true);
 
     try {
-      // Here you would typically send the data to your API
-      console.log("CV generation form submitted:", {
+      // Prepare the CV data
+      const cvData = {
         personalInfo,
         education,
         experience,
         skills,
-      })
+      };
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      console.log("CV generation form submitted:", cvData);
 
-      setIsGenerated(true)
-      setIsGenerating(false)
+      // Send data to the API
+      const response = await fetch("/api/cv", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(cvData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save CV");
+      }
+
+      setIsGenerated(true);
     } catch (error) {
-      console.error("CV generation error:", error)
-      setIsGenerating(false)
+      console.error("CV generation error:", error);
+      // You could add an error state here to display to the user
+    } finally {
+      setIsGenerating(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -134,7 +192,9 @@ export default function CVGenerateForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Enter your basic information for your CV</CardDescription>
+                <CardDescription>
+                  Enter your basic information for your CV
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -221,7 +281,16 @@ export default function CVGenerateForm() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button type="button" onClick={() => (document.querySelector('[data-value="education"]') as HTMLElement)?.click()}>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    (
+                      document.querySelector(
+                        '[data-value="education"]'
+                      ) as HTMLElement
+                    )?.click()
+                  }
+                >
                   Next: Education
                 </Button>
               </CardFooter>
@@ -232,11 +301,16 @@ export default function CVGenerateForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Education</CardTitle>
-                <CardDescription>Add your educational background</CardDescription>
+                <CardDescription>
+                  Add your educational background
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {education.map((edu, index) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-4">
+                  <div
+                    key={index}
+                    className="p-4 border border-gray-200 rounded-lg space-y-4"
+                  >
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium">Education #{index + 1}</h3>
                       {education.length > 1 && (
@@ -254,7 +328,9 @@ export default function CVGenerateForm() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`degree-${index}`}>Degree/Certificate</Label>
+                        <Label htmlFor={`degree-${index}`}>
+                          Degree/Certificate
+                        </Label>
                         <Input
                           id={`degree-${index}`}
                           name="degree"
@@ -265,7 +341,9 @@ export default function CVGenerateForm() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor={`institution-${index}`}>Institution</Label>
+                        <Label htmlFor={`institution-${index}`}>
+                          Institution
+                        </Label>
                         <Input
                           id={`institution-${index}`}
                           name="institution"
@@ -276,7 +354,9 @@ export default function CVGenerateForm() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor={`edu-location-${index}`}>Location</Label>
+                        <Label htmlFor={`edu-location-${index}`}>
+                          Location
+                        </Label>
                         <Input
                           id={`edu-location-${index}`}
                           name="location"
@@ -288,7 +368,9 @@ export default function CVGenerateForm() {
 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-2">
-                          <Label htmlFor={`edu-start-${index}`}>Start Date</Label>
+                          <Label htmlFor={`edu-start-${index}`}>
+                            Start Date
+                          </Label>
                           <Input
                             id={`edu-start-${index}`}
                             name="startDate"
@@ -314,7 +396,9 @@ export default function CVGenerateForm() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`edu-description-${index}`}>Description (optional)</Label>
+                      <Label htmlFor={`edu-description-${index}`}>
+                        Description (optional)
+                      </Label>
                       <Textarea
                         id={`edu-description-${index}`}
                         name="description"
@@ -326,7 +410,12 @@ export default function CVGenerateForm() {
                   </div>
                 ))}
 
-                <Button type="button" variant="outline" onClick={addEducation} className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addEducation}
+                  className="w-full"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Education
                 </Button>
@@ -336,13 +425,24 @@ export default function CVGenerateForm() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    const tab = document.querySelector('[data-value="personal"]') as HTMLElement | null;
+                    const tab = document.querySelector(
+                      '[data-value="personal"]'
+                    ) as HTMLElement | null;
                     tab?.click();
                   }}
                 >
                   Previous: Personal Info
                 </Button>
-                <Button type="button" onClick={() => (document.querySelector('[data-value="experience"]') as HTMLElement)?.click()}>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    (
+                      document.querySelector(
+                        '[data-value="experience"]'
+                      ) as HTMLElement
+                    )?.click()
+                  }
+                >
                   Next: Experience
                 </Button>
               </CardFooter>
@@ -357,7 +457,10 @@ export default function CVGenerateForm() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {experience.map((exp, index) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-4">
+                  <div
+                    key={index}
+                    className="p-4 border border-gray-200 rounded-lg space-y-4"
+                  >
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium">Experience #{index + 1}</h3>
                       {experience.length > 1 && (
@@ -397,7 +500,9 @@ export default function CVGenerateForm() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor={`exp-location-${index}`}>Location</Label>
+                        <Label htmlFor={`exp-location-${index}`}>
+                          Location
+                        </Label>
                         <Input
                           id={`exp-location-${index}`}
                           name="location"
@@ -409,7 +514,9 @@ export default function CVGenerateForm() {
 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-2">
-                          <Label htmlFor={`exp-start-${index}`}>Start Date</Label>
+                          <Label htmlFor={`exp-start-${index}`}>
+                            Start Date
+                          </Label>
                           <Input
                             id={`exp-start-${index}`}
                             name="startDate"
@@ -435,7 +542,9 @@ export default function CVGenerateForm() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`exp-description-${index}`}>Description</Label>
+                      <Label htmlFor={`exp-description-${index}`}>
+                        Description
+                      </Label>
                       <Textarea
                         id={`exp-description-${index}`}
                         name="description"
@@ -449,7 +558,12 @@ export default function CVGenerateForm() {
                   </div>
                 ))}
 
-                <Button type="button" variant="outline" onClick={addExperience} className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addExperience}
+                  className="w-full"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Experience
                 </Button>
@@ -458,11 +572,26 @@ export default function CVGenerateForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => (document.querySelector('[data-value="education"]') as HTMLElement)?.click()}
+                  onClick={() =>
+                    (
+                      document.querySelector(
+                        '[data-value="education"]'
+                      ) as HTMLElement
+                    )?.click()
+                  }
                 >
                   Previous: Education
                 </Button>
-                <Button type="button" onClick={() => (document.querySelector('[data-value="skills"]') as HTMLElement)?.click()}>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    (
+                      document.querySelector(
+                        '[data-value="skills"]'
+                      ) as HTMLElement
+                    )?.click()
+                  }
+                >
                   Next: Skills
                 </Button>
               </CardFooter>
@@ -473,7 +602,9 @@ export default function CVGenerateForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Skills</CardTitle>
-                <CardDescription>Add your technical and professional skills</CardDescription>
+                <CardDescription>
+                  Add your technical and professional skills
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -482,7 +613,9 @@ export default function CVGenerateForm() {
                       <Input
                         placeholder="e.g., JavaScript, Project Management, etc."
                         value={skill}
-                        onChange={(e) => handleSkillChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleSkillChange(index, e.target.value)
+                        }
                       />
                       {skills.length > 1 && (
                         <Button
@@ -499,7 +632,12 @@ export default function CVGenerateForm() {
                   ))}
                 </div>
 
-                <Button type="button" variant="outline" onClick={addSkill} className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addSkill}
+                  className="w-full"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Skill
                 </Button>
@@ -508,11 +646,21 @@ export default function CVGenerateForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => (document.querySelector('[data-value="experience"]') as HTMLElement)?.click()}
+                  onClick={() =>
+                    (
+                      document.querySelector(
+                        '[data-value="experience"]'
+                      ) as HTMLElement
+                    )?.click()
+                  }
                 >
                   Previous: Experience
                 </Button>
-                <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={isGenerating}>
+                <Button
+                  type="submit"
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={isGenerating}
+                >
                   {isGenerating ? "Generating..." : "Generate CV"}
                 </Button>
               </CardFooter>
@@ -528,9 +676,12 @@ export default function CVGenerateForm() {
               <div className="bg-green-100 p-3 rounded-full mb-4">
                 <FileText className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold text-primary mb-2">Your CV has been generated!</h2>
+              <h2 className="text-xl font-semibold text-primary mb-2">
+                Your CV has been generated!
+              </h2>
               <p className="text-gray-600 mb-6">
-                Your professional CV has been created based on the information you provided.
+                Your professional CV has been created based on the information
+                you provided.
               </p>
               <div className="flex gap-4">
                 <Button className="bg-primary hover:bg-primary/90">
@@ -544,6 +695,5 @@ export default function CVGenerateForm() {
         </Card>
       )}
     </div>
-  )
+  );
 }
-
