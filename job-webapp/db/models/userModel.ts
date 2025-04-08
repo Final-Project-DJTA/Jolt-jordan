@@ -173,6 +173,59 @@ class UserModel {
 
     return "Telegram ID verified successfully";
   }
+
+  /**
+   * Delete a user and their associated profile
+   * Implements cascade delete for the one-to-one relationship
+   */
+  static async deleteUser(userId: string) {
+    try {
+      // First check if the user exists
+      const user = await this.collection().findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        throw { message: "User not found", status: 404 };
+      }
+
+      // Start a session for transactional operations
+      const session = database.client.startSession();
+      
+      try {
+        // Use a transaction to ensure both operations succeed or both fail
+        await session.withTransaction(async () => {
+          // Delete the profile first (foreign key relationship)
+          const profileResult = await ProfileModel.collection().deleteOne(
+            { userId: new ObjectId(userId) },
+            { session }
+          );
+          
+          console.log(`Deleted profile for user ${userId}: ${profileResult.deletedCount} document(s) removed`);
+          
+          // Then delete the user
+          const userResult = await this.collection().deleteOne(
+            { _id: new ObjectId(userId) },
+            { session }
+          );
+          
+          console.log(`Deleted user ${userId}: ${userResult.deletedCount} document(s) removed`);
+          
+          if (userResult.deletedCount === 0) {
+            throw { message: "Failed to delete user", status: 500 };
+          }
+        });
+        
+        return { message: "User and associated profile deleted successfully" };
+      } catch (error) {
+        console.error(`Transaction error while deleting user ${userId}:`, error);
+        throw error;
+      } finally {
+        // End the session
+        await session.endSession();
+      }
+    } catch (error) {
+      console.error(`Error deleting user ${userId}:`, error);
+      throw error;
+    }
+  }
 }
 
 export default UserModel;
