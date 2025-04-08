@@ -92,10 +92,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         "/api/profile",
+        "/api/profile/tags", // Add this line to protect the tags API
         "/api/bookmarks/:path*",
         "/api/jobs", 
         "/bookmarks",
-        "/profile/:path*"  // Added this to protect all profile routes
+        "/profile/:path*"
     ]
 }
 
