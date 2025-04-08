@@ -79,7 +79,7 @@ class UserModel {
 
     return {
       message: "Login successful!",
-      userId: user._id,
+      _id: user._id,
       name: user.name,
       username: user.username,
       email: user.email,
