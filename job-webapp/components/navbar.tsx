@@ -1,40 +1,26 @@
-"use client"
+import Link from "next/link";
+import Image from "next/image";
+import { cookies } from "next/headers";
+import ParticleBackground from "@/components/ui/particle-background";
+import ButtonLogout from "./ButtonLogout";
+import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
+import ClientAnimatedLogo from "./ClientAnimatedLogo";
+import ButtonAuth from "./ButtonAuth";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
-import ParticleBackground from "@/components/ui/particle-background"
-
-export default function Navbar() {
-  const [isLoaded, setIsLoaded] = useState(false)
-
-  useEffect(() => {
-    setIsLoaded(true)
-  }, [])
+export default async function Navbar() {
+  const cookieStore = await cookies();
+  const auth = cookieStore.get("Authorization")?.value;
+  console.log(auth);
 
   return (
     <header className="bg-primary text-primary-foreground relative overflow-hidden">
       <ParticleBackground />
       <div className="container mx-auto flex items-center justify-between py-4 relative z-10">
+        {/* Animasi logo dipisah sebagai Client Component */}
         <Link href="/" className="flex items-center gap-2">
-          <motion.div
-            initial={{ rotate: -180, opacity: 0, scale: 0.5 }}
-            animate={isLoaded ? { rotate: 0, opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
-            className="relative w-10 h-10 md:w-12 md:h-12"
-          >
-            <Image src="/images/logo.svg" alt="Jolt Jordan Logo" fill className="object-contain" priority />
-          </motion.div>
-          <motion.span
-            initial={{ x: -20, opacity: 0 }}
-            animate={isLoaded ? { x: 0, opacity: 1 } : {}}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-2xl font-bold"
-          >
-            Jolt Jordan
-          </motion.span>
+          <ClientAnimatedLogo />
+          <span className="text-2xl font-bold">Jolt Jordan</span>
         </Link>
         <nav>
           <ul className="flex items-center space-x-6">
@@ -44,31 +30,37 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link href="/jobs" className="hover:text-secondary transition-colors">
+              <Link
+                href="/jobs"
+                className="hover:text-secondary transition-colors"
+              >
                 Jobs
               </Link>
             </li>
             <li>
-              <Link href="/bookmarks" className="hover:text-secondary transition-colors">
+              <Link
+                href="/bookmarks"
+                className="hover:text-secondary transition-colors"
+              >
                 Bookmarks
               </Link>
             </li>
             <li>
-              <Link href="/profile" className="hover:text-secondary transition-colors">
+              <Link
+                href="/profile"
+                className="hover:text-secondary transition-colors"
+              >
                 Profile
               </Link>
             </li>
             <li>
-              <Link href="/login">
-                <Button variant="outline" className="bg-secondary text-primary-foreground hover:bg-secondary/90">
-                  Login
-                </Button>
-              </Link>
+              <div className="flex space-x-4">
+                <ButtonAuth />
+              </div>
             </li>
           </ul>
         </nav>
       </div>
     </header>
-  )
+  );
 }
-
