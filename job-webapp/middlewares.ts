@@ -89,14 +89,17 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
+// Add the new route to your middleware config
 export const config = {
     matcher: [
         "/api/profile",
-        "/api/profile/tags", // Add this line to protect the tags API
+        "/api/profile/tags",
+        "/api/telegram/send-job-recommendations", // Add this line
         "/api/bookmarks/:path*",
         "/api/jobs", 
         "/bookmarks",
-        "/profile/:path*"
+        "/profile/:path*",
+        "/telegram-debug/job-notifications" // Add this line to protect the debug page
     ]
 }
 
