@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -50,12 +50,14 @@ export default function LoginForm() {
 
       // The cookie should be automatically stored by the browser
       // No need to manually extract it - just redirect
-      router.push("/dashboard");
+      // router.push("/");
+      window.location.href = "/";
+      //
       // Use replace to prevent back navigation to login
       // router.replace("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.message || "Failed to login");
+      setError((error as Error).message || "Failed to login");
     } finally {
       setLoading(false);
     }
