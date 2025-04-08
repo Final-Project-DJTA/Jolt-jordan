@@ -15,10 +15,10 @@ export type UserType = {
   role?: string;
   verificationToken?: string;
   tokenExpires?: Date;
-  profile?: profile;
+  profile?: ProfileType;
 };
 
-export type profile = {
+export type ProfileType = {
   userId: string;
   avatar?: string;
   location?: string;
@@ -38,6 +38,7 @@ export type JobType = {
   salary: string;
   description: string;
   excerpt: string;
+  tags: string[];
   company: company;
   detail: detail;
   createdAt: Date;

@@ -72,7 +72,7 @@ class JobModel {
         if(location) query.location = location
         if(salary) query.salary = salary
 
-        const jobs = await this.collection().find({ location }).toArray()
+        const jobs = await this.collection().find(query).toArray()
         return jobs.map((job) => ({
             ...job,
             _id: job._id.toString()

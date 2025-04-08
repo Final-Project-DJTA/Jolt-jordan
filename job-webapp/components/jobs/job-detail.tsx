@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +12,7 @@ import {
   MapPin,
   Calendar,
   Building,
-  DollarSign,
+  Wallet,
   Globe,
   Users,
   CheckCircle,
@@ -20,7 +21,6 @@ import {
   Star,
   Ban,
 } from "lucide-react"
-import { useState } from "react"
 
 type JobDetailProps = {
   job: JobType
@@ -31,7 +31,6 @@ export default function JobDetail({ job }: JobDetailProps) {
 
   const updateBookmarkStatus = async (status: BookmarkStatus) => {
     const userId = "mock-user-id"
-
     try {
       const res = await fetch("/api/bookmark", {
         method: "PATCH",
@@ -39,10 +38,7 @@ export default function JobDetail({ job }: JobDetailProps) {
           "Content-Type": "application/json",
           "x-user-id": userId,
         },
-        body: JSON.stringify({
-          jobId: job._id,
-          status,
-        }),
+        body: JSON.stringify({ jobId: job._id, status }),
       })
 
       if (!res.ok) throw new Error("Failed to update bookmark")
@@ -58,19 +54,6 @@ export default function JobDetail({ job }: JobDetailProps) {
       month: "long",
       year: "numeric",
     })
-
-  const formatIDR = (amount: string) => {
-    try {
-      const num = Number(amount.replace(/[^\d]/g, ""))
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        maximumFractionDigits: 0,
-      }).format(num)
-    } catch {
-      return amount
-    }
-  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 container mx-auto py-12">
@@ -134,8 +117,8 @@ export default function JobDetail({ job }: JobDetailProps) {
                 <span>{job.location}</span>
               </div>
               <div className="flex items-center text-gray-600">
-                <DollarSign className="h-4 w-4 mr-1" />
-                <span>{formatIDR(job.salary)}</span>
+                <Wallet className="h-4 w-4 mr-1" />
+                <span>{job.salary}</span>
               </div>
               <div className="flex items-center text-gray-600">
                 <Calendar className="h-4 w-4 mr-1" />

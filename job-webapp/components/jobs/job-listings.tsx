@@ -3,40 +3,60 @@
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { JobType } from "@/types"
 import JobCard from "@/components/jobs/job-card"
 import { Search, Filter } from "lucide-react"
+
+const categories = [
+  "All Categories",
+  "Technology",
+  "Marketing",
+  "Finance",
+  "Design",
+  "Sales",
+  "Customer Service",
+  "Engineering",
+  "Healthcare",
+  "Education",
+]
 
 const salaryRanges = [
   { label: "All Salary", value: "all" },
   { label: "< 5.000.000", value: "<5000000" },
   { label: "5.000.000 - 10.000.000", value: "5000000-10000000" },
-  { label: "> 10.000.000", value: ">10000000" }
+  { label: "> 10.000.000", value: ">10000000" },
 ]
 
 export default function JobListings() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [selectedLocation, setSelectedLocation] = useState("All Locations")
-  const [selectedSalary, setSelectedSalary] = useState("All Salary")
+  const [selectedSalary, setSelectedSalary] = useState("all")
   const [jobs, setJobs] = useState<JobType[]>([])
-  const [categories, setCategories] = useState<string[]>([])
   const [locations, setLocations] = useState<string[]>([])
-  const [salaries, setSalaries] = useState<string[]>([])
 
   const parseSalaryToNumber = (salaryString: string): [number, number] => {
-    const numbers = salaryString
+    const clean = salaryString
+      .replace(/Rp/g, "")
       .replace(/\./g, "")
-      .split("-")
-      .map((num) => parseInt(num.trim()))
+      .replace(/,/g, "")
+      .trim()
+
+    const numbers = clean.split("-").map((num) => parseInt(num.trim()))
     return numbers.length === 2 ? [numbers[0], numbers[1]] : [numbers[0], numbers[0]]
   }
 
   const matchesSalaryRange = (salary: string, selected: string): boolean => {
     const [min, max] = parseSalaryToNumber(salary)
-    const selectedMin = parseInt(selected.replace(/[<>]/g, ""))
-    
+    const selectedMin = parseInt(selected.replace(/[^\d]/g, ""))
+
     if (selected.startsWith("<")) return max < selectedMin
     if (selected.startsWith(">")) return min > selectedMin
     if (selected.includes("-")) {
@@ -47,12 +67,18 @@ export default function JobListings() {
     return true
   }
 
-  const fetchJobs = async (filters?: { name?: string; category?: string; location?: string }) => {
+  const fetchJobs = async (filters?: {
+    name?: string
+    category?: string
+    location?: string
+  }) => {
     const query = new URLSearchParams()
 
     if (filters?.name) query.append("name", filters.name)
-    if (filters?.category && filters.category !== "All Categories") query.append("category", filters.category)
-    if (filters?.location && filters.location !== "All Locations") query.append("location", filters.location)
+    if (filters?.category && filters.category !== "All Categories")
+      query.append("category", filters.category)
+    if (filters?.location && filters.location !== "All Locations")
+      query.append("location", filters.location)
 
     const res = await fetch(`/api/jobs?${query.toString()}`, {
       cache: "no-store",
@@ -68,16 +94,15 @@ export default function JobListings() {
       updatedAt: new Date(job.updatedAt),
     }))
 
-    const filtered = selectedSalary !== "all"
-      ? parsedJobs.filter((job) => matchesSalaryRange(job.salary, selectedSalary))
-      : parsedJobs
+    const filteredJobs =
+      selectedSalary !== "all"
+        ? parsedJobs.filter((job) => matchesSalaryRange(job.salary, selectedSalary))
+        : parsedJobs
 
-    setJobs(filtered)
+    setJobs(filteredJobs)
 
     if (!filters) {
-      const categorySet = new Set(parsedJobs.map((job) => job.category))
       const locationSet = new Set(parsedJobs.map((job) => job.location))
-      setCategories(["All Categories", ...Array.from(categorySet)])
       setLocations(["All Locations", ...Array.from(locationSet)])
     }
   }
@@ -97,8 +122,8 @@ export default function JobListings() {
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+          <div className="relative col-span-2">
             <Input
               placeholder="Search jobs..."
               value={searchTerm}
