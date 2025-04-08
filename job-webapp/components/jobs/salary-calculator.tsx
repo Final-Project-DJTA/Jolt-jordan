@@ -9,41 +9,69 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calculator, DollarSign } from "lucide-react"
 
+// Location-based salary multipliers for Indonesia
+const locationAdjustments: Record<string, number> = {
+  Remote: 1.5,
+  Jakarta: 1.4,
+  Tangerang: 1.3,
+  Surabaya: 1.2,
+  Bekasi: 1.2,
+  Bandung: 1.15,
+  Medan: 1.1,
+  Makassar: 1.1,
+  Yogyakarta: 1.05,
+  Semarang: 1.0,
+  Denpasar: 1.0,
+  Palembang: 0.95,
+  Pontianak: 0.95,
+  Other: 0.9,
+}
+
+const categories = [
+  "Technology",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Creative",
+  "Manufacturing",
+  "Retail",
+]
+
 export default function SalaryCalculator() {
   const [isOpen, setIsOpen] = useState(false)
   const [experience, setExperience] = useState("mid")
-  const [location, setLocation] = useState("urban")
-  const [industry, setIndustry] = useState("tech")
+  const [location, setLocation] = useState("Jakarta")
+  const [category, setCategory] = useState("Technology")
   const [skills, setSkills] = useState("")
   const [showResult, setShowResult] = useState(false)
   const [salary, setSalary] = useState(0)
 
   const calculateSalary = () => {
-    // This is a simplified calculation
-    let baseSalary = 70000
+    let baseSalary = 70000000 // Starting average in IDR
 
-    // Experience multiplier
+    // Experience-based multiplier
     if (experience === "entry") baseSalary *= 0.8
     if (experience === "mid") baseSalary *= 1
     if (experience === "senior") baseSalary *= 1.5
     if (experience === "executive") baseSalary *= 2.2
 
-    // Location adjustment
-    if (location === "rural") baseSalary *= 0.9
-    if (location === "suburban") baseSalary *= 1
-    if (location === "urban") baseSalary *= 1.2
-    if (location === "major") baseSalary *= 1.4
+    // Location-based adjustment (based on selected city)
+    const locationMultiplier = locationAdjustments[location] || 1
+    baseSalary *= locationMultiplier
 
-    // Industry adjustment
-    if (industry === "nonprofit") baseSalary *= 0.85
-    if (industry === "education") baseSalary *= 0.9
-    if (industry === "healthcare") baseSalary *= 1.1
-    if (industry === "finance") baseSalary *= 1.3
-    if (industry === "tech") baseSalary *= 1.25
+    // Category/Industry adjustment
+    if (category === "Non-profit") baseSalary *= 0.85
+    if (category === "Education") baseSalary *= 0.9
+    if (category === "Healthcare") baseSalary *= 1.1
+    if (category === "Finance") baseSalary *= 1.3
+    if (category === "Technology") baseSalary *= 1.25
+    if (category === "Creative") baseSalary *= 1.1
+    if (category === "Manufacturing") baseSalary *= 1.05
+    if (category === "Retail") baseSalary *= 1
 
-    // Skills bonus (simplified)
-    const skillsList = skills.split(",").filter((skill) => skill.trim().length > 0)
-    baseSalary += skillsList.length * 2000
+    // Skills bonus
+    const skillsList = skills.split(",").filter((s) => s.trim().length > 0)
+    baseSalary += skillsList.length * 1500000
 
     setSalary(Math.round(baseSalary))
     setShowResult(true)
@@ -94,33 +122,34 @@ export default function SalaryCalculator() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location Type</Label>
+                      <Label htmlFor="location">Location</Label>
                       <Select value={location} onValueChange={setLocation}>
                         <SelectTrigger id="location">
-                          <SelectValue placeholder="Select location type" />
+                          <SelectValue placeholder="Select location" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="rural">Rural Area</SelectItem>
-                          <SelectItem value="suburban">Suburban Area</SelectItem>
-                          <SelectItem value="urban">Urban Area</SelectItem>
-                          <SelectItem value="major">Major City</SelectItem>
+                          {Object.keys(locationAdjustments).map((city) => (
+                            <SelectItem key={city} value={city}>
+                              {city}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="industry">Industry</Label>
-                    <Select value={industry} onValueChange={setIndustry}>
-                      <SelectTrigger id="industry">
+                    <Label htmlFor="category">Industry / Category</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger id="category">
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="tech">Technology</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="nonprofit">Non-profit</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -129,7 +158,7 @@ export default function SalaryCalculator() {
                     <Label htmlFor="skills">Key Skills (comma separated)</Label>
                     <Input
                       id="skills"
-                      placeholder="e.g., JavaScript, React, Project Management"
+                      placeholder="e.g., JavaScript, React, Data Analysis"
                       value={skills}
                       onChange={(e) => setSkills(e.target.value)}
                     />
@@ -149,7 +178,7 @@ export default function SalaryCalculator() {
                       exit={{ opacity: 0, y: 20 }}
                       className="mt-8 text-center"
                     >
-                      <h3 className="text-lg font-medium text-primary mb-2">Your Estimated Market Value</h3>
+                      <h3 className="text-lg font-medium text-primary mb-2">Perkiraan Gaji Tahunan</h3>
                       <motion.div
                         initial={{ scale: 0.8 }}
                         animate={{ scale: [0.8, 1.1, 1] }}
@@ -157,11 +186,13 @@ export default function SalaryCalculator() {
                         className="flex items-center justify-center"
                       >
                         <DollarSign className="h-8 w-8 text-secondary" />
-                        <span className="text-4xl font-bold text-secondary">{salary.toLocaleString()}</span>
-                        <span className="text-lg text-gray-500 ml-1">/year</span>
+                        <span className="text-4xl font-bold text-secondary">
+                          Rp {salary.toLocaleString("id-ID")}
+                        </span>
+                        <span className="text-lg text-gray-500 ml-1">/tahun</span>
                       </motion.div>
                       <p className="text-sm text-gray-600 mt-2">
-                        Based on your experience, location, industry, and skills
+                        Berdasarkan pengalaman, lokasi, industri, dan keterampilan
                       </p>
                     </motion.div>
                   )}
@@ -174,4 +205,3 @@ export default function SalaryCalculator() {
     </div>
   )
 }
-

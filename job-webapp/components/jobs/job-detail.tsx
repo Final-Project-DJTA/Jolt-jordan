@@ -1,15 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { JobType } from "@/types"
+import { JobType, BookmarkStatus } from "@/types"
 import {
-  Bookmark,
   MapPin,
   Calendar,
   Building,
@@ -19,29 +17,63 @@ import {
   CheckCircle,
   ListChecks,
   Gift,
+  Star,
+  Ban,
 } from "lucide-react"
+import { useState } from "react"
 
-interface JobDetailProps {
+type JobDetailProps = {
   job: JobType
 }
 
 export default function JobDetail({ job }: JobDetailProps) {
-  const [bookmarkStatus, setBookmarkStatus] = useState<"none" | "interested" | "not-interested">("none")
+  const [bookmarkStatus, setBookmarkStatus] = useState<BookmarkStatus>("none")
 
-  const handleBookmark = (status: "interested" | "not-interested") => {
-    setBookmarkStatus(status === bookmarkStatus ? "none" : status)
+  const updateBookmarkStatus = async (status: BookmarkStatus) => {
+    const userId = "mock-user-id"
+
+    try {
+      const res = await fetch("/api/bookmark", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId,
+        },
+        body: JSON.stringify({
+          jobId: job._id,
+          status,
+        }),
+      })
+
+      if (!res.ok) throw new Error("Failed to update bookmark")
+      setBookmarkStatus((prev) => (prev === status ? "none" : status))
+    } catch (err) {
+      console.error(err)
+    }
   }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
+  const formatDate = (date: Date) =>
+    new Date(date).toLocaleDateString("id-ID", {
       day: "numeric",
+      month: "long",
       year: "numeric",
     })
+
+  const formatIDR = (amount: string) => {
+    try {
+      const num = Number(amount.replace(/[^\d]/g, ""))
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(num)
+    } catch {
+      return amount
+    }
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 container mx-auto py-12">
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardContent className="p-6">
@@ -63,6 +95,7 @@ export default function JobDetail({ job }: JobDetailProps) {
                   </div>
                 </div>
               </div>
+
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -71,22 +104,23 @@ export default function JobDetail({ job }: JobDetailProps) {
                       ? "text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-700"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
                   }`}
-                  onClick={() => handleBookmark("interested")}
+                  onClick={() => updateBookmarkStatus("interested")}
                 >
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  {bookmarkStatus === "interested" ? "Interested" : "Mark as Interested"}
+                  <Star className="h-4 w-4 mr-2" />
+                  {bookmarkStatus === "interested" ? "Interested" : "Mark Interested"}
                 </Button>
+
                 <Button
                   variant="outline"
                   className={`${
-                    bookmarkStatus === "not-interested"
+                    bookmarkStatus === "not_interested"
                       ? "text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
                   }`}
-                  onClick={() => handleBookmark("not-interested")}
+                  onClick={() => updateBookmarkStatus("not_interested")}
                 >
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  {bookmarkStatus === "not-interested" ? "Not Interested" : "Mark as Not Interested"}
+                  <Ban className="h-4 w-4 mr-2" />
+                  {bookmarkStatus === "not_interested" ? "Not Interested" : "Mark Not Interested"}
                 </Button>
               </div>
             </div>
@@ -101,7 +135,7 @@ export default function JobDetail({ job }: JobDetailProps) {
               </div>
               <div className="flex items-center text-gray-600">
                 <DollarSign className="h-4 w-4 mr-1" />
-                <span>{job.salary}</span>
+                <span>{formatIDR(job.salary)}</span>
               </div>
               <div className="flex items-center text-gray-600">
                 <Calendar className="h-4 w-4 mr-1" />
@@ -116,57 +150,50 @@ export default function JobDetail({ job }: JobDetailProps) {
                 <TabsTrigger value="benefits">Benefits</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="description" className="mt-6">
-                <div className="space-y-4">
-                  <p className="text-gray-700">{job.description}</p>
-
-                  <h3 className="text-lg font-semibold text-primary mt-6 flex items-center">
-                    <ListChecks className="h-5 w-5 mr-2" />
-                    Responsibilities
-                  </h3>
-                  <ul className="space-y-2">
-                    {job.detail.responsibilities.map((responsibility, index) => (
-                      <li key={index} className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span>{responsibility}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <TabsContent value="description" className="mt-6 space-y-4">
+                <p className="text-gray-700">{job.description}</p>
+                <h3 className="text-lg font-semibold text-primary mt-6 flex items-center">
+                  <ListChecks className="h-5 w-5 mr-2" />
+                  Responsibilities
+                </h3>
+                <ul className="space-y-2">
+                  {job.detail.responsibilities.map((r, i) => (
+                    <li key={i} className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
               </TabsContent>
 
-              <TabsContent value="requirements" className="mt-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-primary flex items-center">
-                    <ListChecks className="h-5 w-5 mr-2" />
-                    Requirements
-                  </h3>
-                  <ul className="space-y-2">
-                    {job.detail.requirements.map((requirement, index) => (
-                      <li key={index} className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span>{requirement}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <TabsContent value="requirements" className="mt-6 space-y-4">
+                <h3 className="text-lg font-semibold text-primary flex items-center">
+                  <ListChecks className="h-5 w-5 mr-2" />
+                  Requirements
+                </h3>
+                <ul className="space-y-2">
+                  {job.detail.requirements.map((req, i) => (
+                    <li key={i} className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                      <span>{req}</span>
+                    </li>
+                  ))}
+                </ul>
               </TabsContent>
 
-              <TabsContent value="benefits" className="mt-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-primary flex items-center">
-                    <Gift className="h-5 w-5 mr-2" />
-                    Benefits
-                  </h3>
-                  <ul className="space-y-2">
-                    {job.detail.benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <TabsContent value="benefits" className="mt-6 space-y-4">
+                <h3 className="text-lg font-semibold text-primary flex items-center">
+                  <Gift className="h-5 w-5 mr-2" />
+                  Benefits
+                </h3>
+                <ul className="space-y-2">
+                  {job.detail.benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -240,22 +267,7 @@ export default function JobDetail({ job }: JobDetailProps) {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Similar Jobs</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-500">No similar jobs found at the moment.</p>
-            <Link href="/jobs">
-              <Button variant="outline" className="w-full">
-                Browse All Jobs
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )
 }
-

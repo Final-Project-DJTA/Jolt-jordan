@@ -20,7 +20,7 @@ export default function BookmarksList() {
       const data = await res.json()
 
       const jobList = Array.isArray(data)
-        ? data.map((item) => item.job) // Extract job from bookmark
+        ? data.map((item) => item.job) 
         : []
 
       setJobs(jobList)

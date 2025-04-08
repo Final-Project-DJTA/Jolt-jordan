@@ -1,15 +1,13 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import type { JobType } from "@/types"
-import { Bookmark, MapPin, Calendar, Building, DollarSign, Star } from "lucide-react"
+import type { JobType, BookmarkStatus } from "@/types"
+import { Bookmark, MapPin, Calendar, Building, DollarSign, Star, Ban } from "lucide-react"
 import { motion } from "framer-motion"
 import Confetti from "@/components/ui/confetti"
 
@@ -18,28 +16,55 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job }: JobCardProps) {
-  const [bookmarkStatus, setBookmarkStatus] = useState<"none" | "interested" | "not-interested">("none")
+  const [bookmarkStatus, setBookmarkStatus] = useState<BookmarkStatus>("none")
   const [isHovered, setIsHovered] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const [confettiPosition, setConfettiPosition] = useState({ x: 0, y: 0 })
   const cardRef = useRef<HTMLDivElement>(null)
 
-  const handleBookmark = (status: "interested" | "not-interested", e: React.MouseEvent) => {
-    const newStatus = status === bookmarkStatus ? "none" : status
-    setBookmarkStatus(newStatus)
+  const userId = "mock-user-id"
 
-    if (newStatus === "interested") {
-      setConfettiPosition({ x: e.clientX, y: e.clientY })
-      setShowConfetti(true)
+  const handleBookmark = async (status: BookmarkStatus, e: React.MouseEvent) => {
+    const newStatus = status === bookmarkStatus ? "none" : status
+
+    try {
+      await fetch("/api/bookmark", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId,
+        },
+        body: JSON.stringify({ jobId: job._id, status: newStatus }),
+      })
+      setBookmarkStatus(newStatus)
+
+      if (newStatus === "interested") {
+        setConfettiPosition({ x: e.clientX, y: e.clientY })
+        setShowConfetti(true)
+      }
+    } catch (error) {
+      console.error("Bookmark update failed", error)
     }
   }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (date: Date) =>
+    new Date(date).toLocaleDateString("id-ID", {
+      year: "numeric",
       month: "short",
       day: "numeric",
-      year: "numeric",
     })
+
+  const formatIDR = (amount: string) => {
+    try {
+      const num = Number(amount.replace(/[^\d]/g, ""))
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(num)
+    } catch {
+      return amount
+    }
   }
 
   return (
@@ -108,14 +133,14 @@ export default function JobCard({ job }: JobCardProps) {
                     variant="ghost"
                     size="sm"
                     className={`rounded-full transition-all duration-300 ${
-                      bookmarkStatus === "not-interested"
+                      bookmarkStatus === "not_interested"
                         ? "text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700"
                         : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                     }`}
-                    onClick={(e) => handleBookmark("not-interested", e)}
+                    onClick={(e) => handleBookmark("not_interested", e)}
                   >
                     <motion.div
-                      animate={bookmarkStatus === "not-interested" ? { scale: [1, 1.5, 1] } : {}}
+                      animate={bookmarkStatus === "not_interested" ? { scale: [1, 1.5, 1] } : {}}
                       transition={{ duration: 0.5 }}
                     >
                       <Bookmark className="h-4 w-4" />
@@ -137,7 +162,7 @@ export default function JobCard({ job }: JobCardProps) {
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
                   <DollarSign className="h-3.5 w-3.5 mr-1" />
-                  <span>{job.salary}</span>
+                  <span>{formatIDR(job.salary)}</span>
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="h-3.5 w-3.5 mr-1" />
@@ -168,4 +193,3 @@ export default function JobCard({ job }: JobCardProps) {
     </>
   )
 }
-

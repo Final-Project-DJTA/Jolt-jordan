@@ -14,7 +14,6 @@ export default function JobsPage() {
   useEffect(() => {
     setIsLoaded(true)
 
-    // Simulate loading time
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
