@@ -8,13 +8,18 @@ export type CustomError = {
 export type UserType = {
   name: string;
   email: string;
-  // phoneNumber: string
   username: string;
-  password: string;
+  password?: string; // Optional since we don't return password in responses
+  telegramId?: string;
+  telegramVerified?: boolean;
+  role?: string;
+  verificationToken?: string;
+  tokenExpires?: Date;
   profile?: profile;
 };
 
 export type profile = {
+  userId: string;
   avatar?: string;
   location?: string;
   bio?: string;

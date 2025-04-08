@@ -72,10 +72,10 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
                 <p className="text-sm text-gray-500">Email</p>
                 <p>{user.email}</p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-sm text-gray-500">Phone</p>
                 <p>{user.phoneNumber}</p>
-              </div>
+              </div> */}
               {user.profile?.location && (
                 <div>
                   <p className="text-sm text-gray-500">Location</p>
