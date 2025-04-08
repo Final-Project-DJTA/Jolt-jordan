@@ -16,8 +16,7 @@ export type UserType = {
   role?: string;
   verificationToken?: string;
   tokenExpires?: Date;
-  profile?: ProfileType; // Reference to profile
-};
+}
 
 export type PersonalInfoType = {
   fullName: string;
@@ -70,6 +69,7 @@ export type JobType = {
   salary: string;
   description: string;
   excerpt: string;
+  tags: string[];
   company: company;
   detail: detail;
   createdAt: Date;

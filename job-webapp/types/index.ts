@@ -38,6 +38,7 @@ export type JobType = {
     salary: string;
     description: string;
     excerpt: string;
+    tags: string[];
     company: company;
     detail: detail;
     createdAt: Date;

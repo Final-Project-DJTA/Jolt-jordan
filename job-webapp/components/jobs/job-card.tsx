@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { JobType, BookmarkStatus } from "@/types"
-import { Bookmark, MapPin, Calendar, Building, DollarSign, Star, Ban } from "lucide-react"
+import { Bookmark, MapPin, Calendar, Building, Wallet, Star } from "lucide-react"
 import { motion } from "framer-motion"
 import Confetti from "@/components/ui/confetti"
 
@@ -54,18 +54,24 @@ export default function JobCard({ job }: JobCardProps) {
       day: "numeric",
     })
 
-  const formatIDR = (amount: string) => {
-    try {
-      const num = Number(amount.replace(/[^\d]/g, ""))
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        maximumFractionDigits: 0,
-      }).format(num)
-    } catch {
-      return amount
-    }
-  }
+    const formatSalary = (salary: string) => {
+      const parts = salary
+        .replace(/Rp|\s/g, "")
+        .split("-")
+        .map((s) => s.trim().replace(/,/g, "")) // ganti koma, jangan titik
+        .map((n) => Number(n))
+    
+      if (parts.length === 2) {
+        const [min, max] = parts
+        return `Rp ${min.toLocaleString("id-ID")} - Rp ${max.toLocaleString("id-ID")}`
+      }
+    
+      if (parts.length === 1) {
+        return `Rp ${parts[0].toLocaleString("id-ID")}`
+      }
+    
+      return salary
+    }    
 
   return (
     <>
@@ -161,8 +167,8 @@ export default function JobCard({ job }: JobCardProps) {
                   <span>{job.location}</span>
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
-                  <DollarSign className="h-3.5 w-3.5 mr-1" />
-                  <span>{formatIDR(job.salary)}</span>
+                  <Wallet className="h-3.5 w-3.5 mr-1" />
+                  <span>{formatSalary(job.salary)}</span>
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="h-3.5 w-3.5 mr-1" />
@@ -177,7 +183,9 @@ export default function JobCard({ job }: JobCardProps) {
             >
               <div className="text-sm text-gray-500">{job.detail.requirements.length} requirements</div>
               <Link href={`/jobs/${job.slug}`}>
-                <Button className="bg-primary hover:bg-primary/90 transition-all duration-300">View Details</Button>
+                <Button className="bg-primary hover:bg-primary/90 transition-all duration-300">
+                  View Details
+                </Button>
               </Link>
             </motion.div>
           </CardContent>
