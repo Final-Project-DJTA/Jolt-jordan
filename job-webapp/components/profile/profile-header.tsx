@@ -37,6 +37,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
 
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Avatar section */}
       <div className="h-24 w-24 relative rounded-full overflow-hidden flex items-center justify-center bg-primary text-primary-foreground">
         {user?.profile?.avatar && imageLoaded ? (
           // Direct img tag with proper error handling
@@ -73,9 +74,11 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
             </Button>
           </Link>
         </div>
+        
+        {/* Display job position instead of bio */}
+        {user.profile?.jobPosition && <p className="mt-4 text-gray-700">{user.profile.jobPosition}</p>}
 
-        {user.profile?.bio && <p className="mt-4 text-gray-700">{user.profile.bio}</p>}
-
+        {/* Skills section */}
         {user.profile?.skills && user.profile.skills.length > 0 && (
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-600 mb-2">Skills</h3>

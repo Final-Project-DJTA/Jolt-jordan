@@ -59,7 +59,7 @@ export async function GET(req: Request) {
                         userId: decoded._id,
                         avatar: "",
                         location: "",
-                        bio: "",
+                        jobPosition: "", // Changed from bio to jobPosition
                         skills: [],
                         tags: [],
                         appliedJobs: [],
@@ -86,7 +86,7 @@ export async function GET(req: Request) {
                 userId,
                 avatar: "",
                 location: "",
-                bio: "",
+                jobPosition: "", // Changed from bio to jobPosition
                 skills: [],
                 tags: [],
                 appliedJobs: [],
