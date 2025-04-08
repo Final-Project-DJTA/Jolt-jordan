@@ -2,132 +2,62 @@ import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
   try {
-    // Get URL parameters
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action') || 'status';
-    
-    // Get bot token from environment variables
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
     if (!botToken) {
-      return NextResponse.json(
-        { success: false, error: 'Missing TELEGRAM_BOT_TOKEN environment variable' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Missing Telegram bot token in environment variables' }, { status: 500 });
     }
 
-    // Get webhook URL from environment or use default
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
-    console.log("Base URL from env:", baseUrl);
-    
-    if (!baseUrl) {
-      return NextResponse.json(
-        { success: false, error: 'Missing NEXT_PUBLIC_APP_URL environment variable' },
-        { status: 500 }
-      );
+    // Get webhook info
+    if (action === 'status') {
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      const data = await response.json();
+      return NextResponse.json(data);
     }
     
-    const webhookUrl = `${baseUrl}/api/telegram/webhook`;
-    console.log("Webhook URL:", webhookUrl);
-    
-    // Check action
+    // Set webhook to current URL
     if (action === 'set') {
-      // Set webhook
-      console.log(`Setting webhook to: ${webhookUrl}`);
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      
+      if (!appUrl) {
+        return NextResponse.json({ error: 'Missing NEXT_PUBLIC_APP_URL in environment variables' }, { status: 500 });
+      }
+      
+      const webhookUrl = `${appUrl}/api/telegram/webhook`;
+      
       const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: webhookUrl,
           drop_pending_updates: true,
-          allowed_updates: ["message", "callback_query"] // Only allow these update types
-        }),
+          allowed_updates: ["message", "callback_query"]
+        })
       });
       
       const data = await response.json();
-      console.log('Webhook setup response:', data);
-      
-      return NextResponse.json({
-        success: data.ok,
-        result: data.result || data.description,
+      return NextResponse.json({ 
+        success: data.ok, 
+        message: data.ok ? 'Webhook set successfully' : data.description,
         webhook_url: webhookUrl
       });
-    } 
-    else if (action === 'remove') {
-      // Remove webhook
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook`, {
-        method: 'POST'
-      });
-      
+    }
+    
+    // Delete webhook
+    if (action === 'delete') {
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook?drop_pending_updates=true`);
       const data = await response.json();
-      
-      return NextResponse.json({
-        success: data.ok,
-        result: data.result || data.description
-      });
-    } 
-    else if (action === 'test') {
-      // Test sending a message (to chat ID from query param)
-      const chatId = searchParams.get('chat_id');
-      if (!chatId) {
-        return NextResponse.json(
-          { success: false, error: 'Missing chat_id parameter' },
-          { status: 400 }
-        );
-      }
-      
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: 'This is a test message from your Jolt Jordan bot. If you see this, the bot is working correctly!',
-        }),
-      });
-      
-      const data = await response.json();
-      
-      return NextResponse.json({
-        success: data.ok,
-        result: data.result || data.description
-      });
-    } 
-    else if (action === 'getUpdates') {
-      // Get recent updates to help debugging
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
-      const data = await response.json();
-      
-      return NextResponse.json({
-        success: data.ok,
-        updates: data.result || [],
+      return NextResponse.json({ 
+        success: data.ok, 
+        message: data.ok ? 'Webhook deleted successfully' : data.description 
       });
     }
-    else {
-      // Get webhook info (default)
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
-      const data = await response.json();
-      
-      return NextResponse.json({
-        success: data.ok,
-        webhook_info: data.result,
-        current_setup: {
-          webhook_url: webhookUrl,
-          base_url: baseUrl,
-          env_vars_set: {
-            TELEGRAM_BOT_TOKEN: !!botToken,
-            NEXT_PUBLIC_APP_URL: !!baseUrl
-          }
-        }
-      });
-    }
+    
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error in telegram setup:', error);
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
+    console.error('Error with webhook setup:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
