@@ -10,32 +10,36 @@ import Link from "next/link"
 const questions = [
   {
     id: 1,
-    question: "What type of work environment do you prefer?",
+    question: "What type of working environment do you prefer?",
     options: [
-      { id: "a", text: "Remote work", category: "remote" },
-      { id: "b", text: "Office environment", category: "office" },
-      { id: "c", text: "Hybrid model", category: "hybrid" },
-      { id: "d", text: "Flexible schedule", category: "flexible" },
+      { id: "a", text: "Remote (work from anywhere)", category: "remote" },
+      { id: "b", text: "Office-based (full onsite)", category: "office" },
+      { id: "c", text: "Hybrid (mix of onsite & remote)", category: "hybrid" },
+      { id: "d", text: "Flexible working hours", category: "flexible" },
     ],
   },
   {
     id: 2,
-    question: "Which industry interests you the most?",
+    question: "Which industry are you most interested in?",
     options: [
-      { id: "a", text: "Technology", category: "tech" },
-      { id: "b", text: "Healthcare", category: "healthcare" },
-      { id: "c", text: "Finance", category: "finance" },
-      { id: "d", text: "Creative arts", category: "creative" },
+      { id: "a", text: "Technology / Startup", category: "tech" },
+      { id: "b", text: "Finance / Banking", category: "finance" },
+      { id: "c", text: "Healthcare / Pharmacy", category: "healthcare" },
+      { id: "d", text: "Creative (Design, Media, etc)", category: "creative" },
+      { id: "e", text: "Education", category: "education" },
+      { id: "f", text: "Government / Civil Service", category: "government" },
+      { id: "g", text: "Logistics / Transportation", category: "logistics" },
+      { id: "h", text: "Manufacturing / Industrial", category: "manufacturing" },
     ],
   },
   {
     id: 3,
-    question: "What's your preferred company size?",
+    question: "What company size do you prefer?",
     options: [
-      { id: "a", text: "Startup (1-50 employees)", category: "startup" },
-      { id: "b", text: "Small company (51-200 employees)", category: "small" },
-      { id: "c", text: "Medium company (201-1000 employees)", category: "medium" },
-      { id: "d", text: "Large corporation (1000+ employees)", category: "large" },
+      { id: "a", text: "Startup (1–50 employees)", category: "startup" },
+      { id: "b", text: "Small company (51–200)", category: "small" },
+      { id: "c", text: "Medium company (201–1000)", category: "medium" },
+      { id: "d", text: "Large corporation (1000+)", category: "large" },
     ],
   },
 ]
@@ -64,19 +68,15 @@ export default function JobQuiz() {
   }
 
   const getJobRecommendation = () => {
-    // This is a simplified recommendation logic
-    // In a real app, you would have more sophisticated matching
-    if (answers.includes("remote") && answers.includes("tech")) {
-      return "Software Developer"
-    } else if (answers.includes("office") && answers.includes("finance")) {
-      return "Financial Analyst"
-    } else if (answers.includes("healthcare")) {
-      return "Healthcare Administrator"
-    } else if (answers.includes("creative")) {
-      return "UX/UI Designer"
-    } else {
-      return "Project Manager"
-    }
+    if (answers.includes("remote") && answers.includes("tech")) return "Remote Web Developer"
+    if (answers.includes("office") && answers.includes("finance")) return "Finance Officer"
+    if (answers.includes("healthcare")) return "Medical Admin Assistant"
+    if (answers.includes("creative")) return "Graphic Designer"
+    if (answers.includes("education")) return "Online Tutor"
+    if (answers.includes("government")) return "Public Policy Officer"
+    if (answers.includes("logistics")) return "Logistics Coordinator"
+    if (answers.includes("manufacturing")) return "Production Supervisor"
+    return "Operations Specialist"
   }
 
   return (
@@ -87,7 +87,7 @@ export default function JobQuiz() {
           className="mx-auto flex items-center gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90"
         >
           <Lightbulb className="h-4 w-4" />
-          {isOpen ? "Close Job Matcher" : "Find Your Perfect Job Match"}
+          {isOpen ? "Close Job Matcher" : "Find Your Job Match"}
         </Button>
       </motion.div>
 
@@ -103,22 +103,19 @@ export default function JobQuiz() {
             <Card className="border-secondary/20">
               <CardHeader className="bg-secondary/10">
                 <CardTitle>Job Matcher Quiz</CardTitle>
-                <CardDescription>Answer a few questions to find your ideal job match</CardDescription>
+                <CardDescription>Answer a few quick questions to discover a job that fits your lifestyle</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 {!showResult ? (
                   <div className="space-y-6">
                     <div className="flex justify-between text-sm text-gray-500 mb-2">
-                      <span>
-                        Question {currentQuestion + 1} of {questions.length}
-                      </span>
+                      <span>Question {currentQuestion + 1} of {questions.length}</span>
                       <span>{Math.round(((currentQuestion + 1) / questions.length) * 100)}% complete</span>
                     </div>
 
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <motion.div
                         className="bg-secondary h-2 rounded-full"
-                        initial={{ width: `${(currentQuestion / questions.length) * 100}%` }}
                         animate={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
                         transition={{ duration: 0.5 }}
                       />
@@ -146,7 +143,7 @@ export default function JobQuiz() {
                       <CheckCircle className="h-8 w-8 text-green-600" />
                     </div>
                     <h3 className="text-2xl font-bold text-primary mb-2">Your Ideal Job Match</h3>
-                    <p className="text-gray-600 mb-6">Based on your answers, we think you'd be a great:</p>
+                    <p className="text-gray-600 mb-6">Based on your answers, you’d likely enjoy working as a:</p>
 
                     <motion.div
                       initial={{ scale: 0.8 }}
@@ -165,7 +162,7 @@ export default function JobQuiz() {
                         </Button>
                       </Link>
                       <Button variant="outline" onClick={resetQuiz}>
-                        Take Quiz Again
+                        Retake Quiz
                       </Button>
                     </div>
                   </motion.div>
@@ -178,4 +175,3 @@ export default function JobQuiz() {
     </div>
   )
 }
-
