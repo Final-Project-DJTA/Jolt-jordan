@@ -7,6 +7,7 @@ import Navbar from "@/components/navbar"
 import CursorEffect from "@/components/ui/cursor-effect"
 import JobAlert from "@/components/ui/job-alert"
 import { BookmarkProvider } from "@/context/BookmarkContext"
+import { ToastContainer } from "react-toastify"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -16,6 +17,22 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
+// Add this script to the head
+const cacheControlScript = `
+  window.purgeImageCache = function(url) {
+    // Create a new image element with cache-busting
+    const img = new Image();
+    const bustCache = url.includes('?') ? '&' : '?';
+    img.src = url + bustCache + '_=' + Date.now();
+    
+    // Force fetch
+    fetch(url, {cache: 'reload', mode: 'no-cors'})
+      .catch(() => console.log('Cache invalidation attempted'));
+      
+    return img;
+  }
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,6 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en"
     suppressHydrationWarning={true}>
+      <head>
+        {/* Add the cache purging script */}
+        <script dangerouslySetInnerHTML={{ __html: cacheControlScript }} />
+        {/* Other head content */}
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
         <BookmarkProvider>
@@ -40,8 +62,4 @@ export default function RootLayout({
   )
 }
 
-
-
 import './globals.css'
-import { ToastContainer } from "react-toastify"
-

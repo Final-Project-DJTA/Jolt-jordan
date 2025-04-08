@@ -35,7 +35,7 @@ const ProfileSchema = z.object({
   userId: z.string(),
   avatar: z.string().optional(),
   location: z.string().optional(),
-  bio: z.string().optional(),
+  jobPosition: z.string().optional(), // Changed from bio to jobPosition
   skills: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   appliedJobs: z.array(z.string()).optional(),
@@ -49,7 +49,7 @@ type ProfileType = {
   userId: string | ObjectId;
   avatar?: string;
   location?: string;
-  bio?: string;
+  jobPosition?: string; // Changed from bio to jobPosition
   skills?: string[];
   tags?: string[];
   appliedJobs?: string[];
@@ -102,7 +102,7 @@ class ProfileModel {
         userId: new ObjectId(userId),
         avatar: "",
         location: "",
-        bio: "",
+        jobPosition: "", // Changed from bio to jobPosition
         skills: [],
         tags: [],
         appliedJobs: [],
@@ -173,7 +173,7 @@ class ProfileModel {
         userId: new ObjectId(userId),
         avatar: "",
         location: "",
-        bio: "",
+        jobPosition: "", // Changed from bio to jobPosition
         tags: [],
         appliedJobs: [],
         savedJobs: [],

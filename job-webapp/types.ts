@@ -50,7 +50,7 @@ export type ProfileType = {
   userId: string;
   avatar?: string;
   location?: string;
-  bio?: string;
+  jobPosition?: string; // Changed from bio to jobPosition
   skills?: string[];
   tags?: string[];
   appliedJobs?: string[];

@@ -5,24 +5,33 @@ import ProfileHeader from "@/components/profile/profile-header"
 import ProfileTabs from "@/components/profile/profile-tabs"
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Spinner } from "@/components/ui/spinner"
+import JobPreferenceTags from "@/components/profile/job-preference-tags"
 
 export default function ProfilePage() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     setIsLoaded(true)
     
     const fetchProfile = async () => {
       try {
-        const response = await fetch("/api/profile", {
+        // Add stronger cache-busting with a unique ID
+        const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const response = await fetch(`/api/profile?nonce=${nonce}`, {
           headers: {
             "Content-Type": "application/json",
+            // Add no-cache headers to prevent browser caching
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
           },
+          // Critical: This prevents browser from using any cached responses
+          cache: "no-store",
           credentials: "include",
         })
         
@@ -84,30 +93,45 @@ export default function ProfilePage() {
       } catch (error) {
         console.error("Error fetching profile:", error)
         // Use fallback mock data if needed
-        setUser({
-          name: "User",
-          email: "user@example.com",
-          username: "user",
-          profile: {
-            avatar: "",
-            location: "",
-            bio: "",
-            skills: [],
-            tags: [],
-            appliedJobs: [],
-            savedJobs: [],
-            personalInfo: {},
-            education: [],
-            experience: []
-          }
-        })
       } finally {
         setIsLoading(false)
       }
     }
     
     fetchProfile()
-  }, [router])
+    
+    // Specifically extract the 'nocache' parameter to force refresh
+    const forceRefresh = searchParams?.get('nocache');
+    
+  }, [router, searchParams])
+
+  // Check for recently updated avatar
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return;
+    
+    const updatedAvatar = localStorage.getItem('updated_avatar_url');
+    const updatedAt = localStorage.getItem('avatar_updated_at');
+    
+    // If avatar was recently updated (within last 5 seconds)
+    if (updatedAvatar && updatedAt && 
+        Date.now() - parseInt(updatedAt) < 5000 && 
+        user && user.profile) {
+      
+      // Update the avatar in the current state
+      setUser(prevUser => ({
+        ...prevUser,
+        profile: {
+          ...prevUser.profile,
+          avatar: updatedAvatar
+        }
+      }));
+      
+      // Clear the stored values
+      localStorage.removeItem('updated_avatar_url');
+      localStorage.removeItem('avatar_updated_at');
+    }
+  }, [user]);
 
   // Show loading spinner while data is being fetched
   if (isLoading) {
@@ -148,6 +172,26 @@ export default function ProfilePage() {
       <div className="mt-8">
         <ProfileTabs user={user} />
       </div>
+      
+      {/* Add the job preferences section */}
+      {user && (
+        <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-2xl font-bold mb-4">Job Preferences</h2>
+          <JobPreferenceTags 
+            userTags={user?.profile?.tags || []} 
+            onTagsUpdated={(newTags) => {
+              // Update the user state with new tags
+              setUser(prevUser => ({
+                ...prevUser,
+                profile: {
+                  ...prevUser.profile,
+                  tags: newTags
+                }
+              }));
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
