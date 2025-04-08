@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { UserType } from "@/types"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { FileText, Upload, Download } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { UserType } from "@/types";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { FileText, Upload, Download } from "lucide-react";
 
 interface ProfileTabsProps {
-  user: UserType
+  user: UserType;
 }
 
 export default function ProfileTabs({ user }: ProfileTabsProps) {
@@ -45,17 +45,21 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
             ) : (
               <div className="flex flex-col gap-4">
                 <p className="text-gray-500">
-                  You haven&apos;t uploaded a resume yet. Upload one to apply for jobs more quickly.
+                  You haven&apos;t uploaded a resume yet. Upload one to apply
+                  for jobs more quickly.
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <Link href="/profile/cv/check">
+                  <Link href="/profile/create-resume">
                     <Button className="bg-primary hover:bg-primary/90">
                       <Upload className="h-4 w-4 mr-2" />
                       Upload & Check CV
                     </Button>
                   </Link>
                   <Link href="/profile/cv/generate">
-                    <Button variant="outline" className="border-secondary text-secondary hover:bg-secondary/10">
+                    <Button
+                      variant="outline"
+                      className="border-secondary text-secondary hover:bg-secondary/10"
+                    >
                       <FileText className="h-4 w-4 mr-2" />
                       Generate CV
                     </Button>
@@ -66,7 +70,9 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-primary mb-4">Contact Information</h2>
+            <h2 className="text-xl font-semibold text-primary mb-4">
+              Contact Information
+            </h2>
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-500">Email</p>
@@ -89,7 +95,9 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
 
       <TabsContent value="applications" className="mt-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold text-primary mb-4">Job Applications</h2>
+          <h2 className="text-xl font-semibold text-primary mb-4">
+            Job Applications
+          </h2>
           {user.profile?.appliedJobs && user.profile.appliedJobs.length > 0 ? (
             <div>
               {/* Job applications list would go here */}
@@ -97,9 +105,13 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">You haven&apos;t applied to any jobs yet.</p>
+              <p className="text-gray-500 mb-4">
+                You haven&apos;t applied to any jobs yet.
+              </p>
               <Link href="/jobs">
-                <Button className="bg-primary hover:bg-primary/90">Browse Jobs</Button>
+                <Button className="bg-primary hover:bg-primary/90">
+                  Browse Jobs
+                </Button>
               </Link>
             </div>
           )}
@@ -108,7 +120,9 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
 
       <TabsContent value="saved" className="mt-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold text-primary mb-4">Saved Jobs</h2>
+          <h2 className="text-xl font-semibold text-primary mb-4">
+            Saved Jobs
+          </h2>
           {user.profile?.savedJobs && user.profile.savedJobs.length > 0 ? (
             <div>
               {/* Saved jobs list would go here */}
@@ -116,15 +130,18 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">You haven&apos;t saved any jobs yet.</p>
+              <p className="text-gray-500 mb-4">
+                You haven&apos;t saved any jobs yet.
+              </p>
               <Link href="/jobs">
-                <Button className="bg-primary hover:bg-primary/90">Browse Jobs</Button>
+                <Button className="bg-primary hover:bg-primary/90">
+                  Browse Jobs
+                </Button>
               </Link>
             </div>
           )}
         </div>
       </TabsContent>
     </Tabs>
-  )
+  );
 }
-
