@@ -1,34 +1,39 @@
-"use client"
+'use client'
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
-import { ArrowLeft, Building, Calendar, Edit, MapPin } from "lucide-react"
-import { use, useState, useEffect } from 'react'
+import { ArrowLeft, Building, Calendar, Edit, MapPin, Tag } from "lucide-react"
+import { useState, useEffect } from 'react' // Remove 'use' import that's causing errors
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import { getJob } from "@/lib/data"
 import { Separator } from "@/components/ui/separator"
 import { DeleteJobDialog } from "@/components/delete-job-dialog"
+import { Badge } from "@/components/ui/badge" // Add Badge import for tags
 
-export default function JobDetailPage({ params }: { params: { id: string } }) {
+export default function JobDetailPage({ params }: { params: { slug: string } }) {
   const router = useRouter()
-
-  const unwrappedParams = use(params) as { id: string }
-  const  id = unwrappedParams.id;
-
+  const slug = params.slug // Access slug directly
+  
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchJob() {
       try {
-        const response = await fetch(`/api/jobs/${id}`)
+        console.log("Fetching job with slug:", slug)
+        const response = await fetch(`/api/jobs/${slug}`)
         if (!response.ok) {
           throw new Error('Failed to fetch job')
         }
         const data = await response.json()
+        
+        // Add debug logging for tags
+        console.log("Job data received:", data)
+        console.log("Tags in job data:", data.tags)
+        console.log("Tags type:", Array.isArray(data.tags) ? "Array" : typeof data.tags)
+        
         setJob(data)
       } catch (error) {
         console.error("Error fetching job:", error)
@@ -38,7 +43,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     }
 
     fetchJob()
-  }, [id])
+  }, [slug])
 
   if (loading) {
     return <div className="flex justify-center p-8">Loading job details...</div>
@@ -81,13 +86,24 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
+      {job.tags && job.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {job.tags.map((tag: string, index: number) => (
+            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+              <Tag className="h-3 w-3 mr-1" />
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       <div className="flex gap-2">
         <Button asChild variant="outline">
-          <Link href={`/jobs/${job._id}/edit`}>
+          <Link href={`/jobs/${slug}/edit`}>
             <Edit className="h-4 w-4 mr-1" /> Edit
           </Link>
         </Button>
-        <DeleteJobDialog jobId={job._id} jobName={job.name} />
+        <DeleteJobDialog jobId={slug} jobName={job.name} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -215,6 +231,25 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Technology Tags Card */}
+          {job.tags && job.tags.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Technologies & Skills</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {job.tags.map((tag: string, index: number) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+                      <Tag className="h-3 w-3 mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

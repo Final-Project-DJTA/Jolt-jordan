@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, X } from "lucide-react"
 
@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
 
 interface JobFormProps {
   job?: JobType
@@ -25,6 +26,7 @@ interface JobFormProps {
 export function JobForm({ job, isEditing = false }: JobFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [tagInput, setTagInput] = useState("")
   const [formData, setFormData] = useState({
     name: job?.name || "",
     slug: job?.slug || "",
@@ -46,7 +48,16 @@ export function JobForm({ job, isEditing = false }: JobFormProps) {
       requirements: job?.detail?.requirements || [""],
       benefits: job?.detail?.benefits || [""],
     },
+    tags: job?.tags || [],
   })
+
+  // Debug log for initial tags when editing
+  useEffect(() => {
+    if (isEditing && job) {
+      console.log("Editing job with tags:", job.tags);
+      console.log("Tags in form data:", formData.tags);
+    }
+  }, [isEditing, job, formData.tags]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -111,38 +122,103 @@ export function JobForm({ job, isEditing = false }: JobFormProps) {
     })
   }
 
+  // Tag handling functions
+  const addTag = () => {
+    if (tagInput.trim() === "") return
+    
+    // Don't add duplicate tags
+    if (formData.tags.includes(tagInput.trim())) {
+      toast({
+        title: "Duplicate Tag",
+        description: "This tag has already been added.",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    setFormData((prev) => ({
+      ...prev,
+      tags: [...prev.tags, tagInput.trim()]
+    }))
+    setTagInput("")
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }))
+  }
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addTag()
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-     // Add validation for category
-  if (!formData.category) {
-    toast({
-      title: "Missing Category",
-      description: "Please select a job category",
-      variant: "destructive",
-    });
-    return;
-  }
+    // Add validation for category
+    if (!formData.category) {
+      toast({
+        title: "Missing Category",
+        description: "Please select a job category",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true)
 
     try {
+      // CRITICAL FIX: Create a clean data object
+      const cleanFormData = {
+        name: formData.name,
+        slug: formData.slug,
+        location: formData.location,
+        category: formData.category,
+        salary: formData.salary,
+        description: formData.description,
+        excerpt: formData.excerpt,
+        company: { ...formData.company },
+        detail: {
+          responsibilities: [...formData.detail.responsibilities],
+          requirements: [...formData.detail.requirements],
+          benefits: [...formData.detail.benefits],
+        },
+        // IMPORTANT: Explicitly include tags array
+        tags: [...formData.tags],
+      }
+      
+      console.log("🔄 Form submission started")
+      console.log("🏷️ Tags being submitted:", cleanFormData.tags)
+      console.log("📄 Form data structure:", JSON.stringify(cleanFormData, null, 2))
+
       if (isEditing && job) {
-        await updateJob(job._id, formData)
+        console.log("✏️ Updating job:", job._id || job.slug)
+        const identifier = job._id || job.slug
+        const result = await updateJob(identifier, cleanFormData)
+        
+        console.log("✅ Update result:", result)
+        console.log("🏷️ Tags after update:", result?.tags)
+        
         toast({
           title: "Job Updated",
           description: "The job has been updated successfully.",
         })
       } else {
-        await createJob(formData)
+        const result = await createJob(cleanFormData);
+        console.log("Create result:", result);
         toast({
           title: "Job Created",
           description: "The job has been created successfully.",
-        })
+        });
       }
-      router.push("/jobs")
+      router.push("/jobs");
     } catch (error) {
-      console.error("Error submitting job:", error)
+      console.error("❌ Error submitting job:", error)
       toast({
         title: "Error",
         description: `Failed to ${isEditing ? "update" : "create"} job. Please try again.`,
@@ -377,6 +453,47 @@ export function JobForm({ job, isEditing = false }: JobFormProps) {
                 </div>
               ))}
             </div>
+
+            {/* Tags Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="tags">Tags</Label>
+              </div>
+              <div className="flex gap-2">
+                <Input 
+                  id="tags"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagInputKeyDown}
+                  placeholder="Add tag and press Enter"
+                />
+                <Button 
+                  type="button" 
+                  onClick={addTag}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <button 
+                        type="button" 
+                        onClick={() => removeTag(tag)}
+                        className="text-primary-foreground/70 hover:text-primary-foreground ml-1 focus:outline-none"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="text-sm text-muted-foreground">
+                Add technologies or skills required for this job (e.g., React, JavaScript, Marketing)
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -401,4 +518,3 @@ export function JobForm({ job, isEditing = false }: JobFormProps) {
     </form>
   )
 }
-

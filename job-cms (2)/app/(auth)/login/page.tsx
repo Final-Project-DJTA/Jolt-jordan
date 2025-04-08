@@ -25,7 +25,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const showSuccess = searchParams.get("registered") === "true"
-  const from = searchParams.get("from") || "/dashboard"
+  const from = searchParams.get("from") || "/"
   
   const [formData, setFormData] = useState({
     email: "",
@@ -73,8 +73,13 @@ export default function LoginPage() {
       //   throw new Error(data.error || "Login failed");
       // }
       await login(formData.email, formData.password)
-      router.push(from)
-      router.push('/')
+      if (!authError) {
+        setTimeout(()=> {
+          router.push('/')
+        },100)
+      }
+      // router.push(from)
+      // router.push('/')
     } catch (err: any) {
       setError(err.message)
     }
