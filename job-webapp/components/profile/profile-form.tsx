@@ -20,7 +20,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     name: user.name,
     username: user.username,
     email: user.email,
-    phoneNumber: user.phoneNumber,
+    // phoneNumber: user.phoneNumber,
     location: user.profile?.location || "",
     bio: user.profile?.bio || "",
     skills: user.profile?.skills?.join(", ") || "",
@@ -73,10 +73,10 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="phoneNumber">Phone Number</Label>
             <Input id="phoneNumber" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required />
-          </div>
+          </div> */}
 
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
