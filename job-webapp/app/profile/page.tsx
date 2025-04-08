@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Spinner } from "@/components/ui/spinner"
+import JobPreferenceTags from "@/components/profile/job-preference-tags"
 
 export default function ProfilePage() {
   const [isLoaded, setIsLoaded] = useState(false)
@@ -171,6 +172,26 @@ export default function ProfilePage() {
       <div className="mt-8">
         <ProfileTabs user={user} />
       </div>
+      
+      {/* Add the job preferences section */}
+      {user && (
+        <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-2xl font-bold mb-4">Job Preferences</h2>
+          <JobPreferenceTags 
+            userTags={user?.profile?.tags || []} 
+            onTagsUpdated={(newTags) => {
+              // Update the user state with new tags
+              setUser(prevUser => ({
+                ...prevUser,
+                profile: {
+                  ...prevUser.profile,
+                  tags: newTags
+                }
+              }));
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
