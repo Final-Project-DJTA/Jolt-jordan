@@ -6,6 +6,7 @@ import ProfileTabs from "@/components/profile/profile-tabs"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function ProfilePage() {
   const [isLoaded, setIsLoaded] = useState(false)
@@ -22,7 +23,7 @@ export default function ProfilePage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // Make sure this is added
+          credentials: "include",
         })
         
         if (!response.ok) {
@@ -30,24 +31,55 @@ export default function ProfilePage() {
             router.push("/login")
             return
           }
-          throw new Error("Failed to fetch profile")
+          throw new Error(`Failed to fetch profile: ${response.status}`)
         }
         
-        const userData = await response.json()
-        // Make sure the data structure is consistent with what components expect
-        if (userData && !userData.profile && userData._id) {
-          // If we get separated user and profile data, restructure it
-          const { _id, name, email, username, ...profileData } = userData;
+        const data = await response.json()
+        console.log("Profile API response:", data)
+        
+        // Properly structure the user and profile data
+        // Check if data is already properly structured
+        if (data && data.profile) {
+          // Data already has the expected structure
+          setUser(data)
+        } 
+        // Handle case where profile might be embedded differently
+        else if (data && data._id) {
+          // Extract user fields vs profile fields
+          const { 
+            _id, name, email, username, role, telegramId, telegramVerified,
+            // Everything else goes into profile
+            ...profileFields 
+          } = data;
+          
+          // Create properly structured user object
           setUser({
             _id,
-            name, 
+            name,
             email,
             username,
-            profile: profileData // Put the rest of the data in profile
+            role: role || "user",
+            telegramId,
+            telegramVerified,
+            // Ensure profile is properly structured
+            profile: {
+              // Include known profile fields
+              userId: _id,
+              avatar: profileFields.avatar || "",
+              location: profileFields.location || "",
+              bio: profileFields.bio || "",
+              skills: profileFields.skills || [],
+              tags: profileFields.tags || [],
+              appliedJobs: profileFields.appliedJobs || [],
+              savedJobs: profileFields.savedJobs || [],
+              personalInfo: profileFields.personalInfo || {},
+              education: profileFields.education || [],
+              experience: profileFields.experience || []
+            }
           })
         } else {
-          // Data already has the right structure
-          setUser(userData)
+          console.error("Unexpected data structure from API:", data)
+          throw new Error("Invalid data structure received from API")
         }
       } catch (error) {
         console.error("Error fetching profile:", error)
@@ -57,13 +89,16 @@ export default function ProfilePage() {
           email: "user@example.com",
           username: "user",
           profile: {
-            avatar: "/placeholder.svg?height=100&width=100",
+            avatar: "",
             location: "",
             bio: "",
             skills: [],
             tags: [],
             appliedJobs: [],
             savedJobs: [],
+            personalInfo: {},
+            education: [],
+            experience: []
           }
         })
       } finally {
@@ -74,20 +109,13 @@ export default function ProfilePage() {
     fetchProfile()
   }, [router])
 
-  // Use the fetched user data or fall back to mock data if still loading
-  const userData = user || {
-    name: "Loading...",
-    email: "",
-    username: "",
-    profile: {
-      avatar: "/placeholder.svg?height=100&width=100",
-      location: "",
-      bio: "",
-      skills: [],
-      tags: [],
-      appliedJobs: [],
-      savedJobs: [],
-    },
+  // Show loading spinner while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   // Make sure both components get the data they expect
@@ -107,7 +135,6 @@ export default function ProfilePage() {
             whileHover={{ rotate: 10, scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            {/* Add conditional rendering to avoid empty src */}
             <Image 
               src="/images/logo.svg" 
               alt="Jolt Jordan Logo" 
@@ -117,9 +144,9 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       )}
-      <ProfileHeader user={userData} />
+      <ProfileHeader user={user} />
       <div className="mt-8">
-        <ProfileTabs user={userData} />
+        <ProfileTabs user={user} />
       </div>
     </div>
   )

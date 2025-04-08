@@ -48,13 +48,15 @@ export async function GET(req: Request) {
                 const decoded = await verifyWithJose<{_id: string}>(token);
                 console.log("Token verified manually - user ID:", decoded._id);
                 
-                // Get user info
+                // Get user info - using aggregated approach
                 const user = await UserModel.getProfile(decoded._id);
                 const profile = await ProfileModel.findByUserId(decoded._id);
                 
+                // Return aggregated structure
                 return Response.json({
                     ...user,
                     profile: profile || {
+                        userId: decoded._id,
                         avatar: "",
                         location: "",
                         bio: "",
@@ -62,6 +64,9 @@ export async function GET(req: Request) {
                         tags: [],
                         appliedJobs: [],
                         savedJobs: [],
+                        personalInfo: {},
+                        education: [],
+                        experience: []
                     }
                 });
             } catch (error) {
@@ -74,9 +79,11 @@ export async function GET(req: Request) {
         const user = await UserModel.getProfile(userId);
         const profile = await ProfileModel.findByUserId(userId);
         
+        // Return aggregated structure consistently
         return Response.json({
             ...user,
             profile: profile || {
+                userId,
                 avatar: "",
                 location: "",
                 bio: "",
@@ -84,6 +91,9 @@ export async function GET(req: Request) {
                 tags: [],
                 appliedJobs: [],
                 savedJobs: [],
+                personalInfo: {},
+                education: [],
+                experience: []
             }
         });
     } catch (error) {
