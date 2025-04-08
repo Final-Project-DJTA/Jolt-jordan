@@ -28,7 +28,7 @@ const DetailSchema = new Schema<Detail>({
 const JobSchema = new mongoose.Schema<IJob>(
   {
     name: { type: String, required: true },
-    slug: { type: String, index: true},
+    slug: { type: String },
     location: { type: String, required: true },
     category: { type: String, required: true },
     salary: { type: String, required: true },
@@ -36,6 +36,10 @@ const JobSchema = new mongoose.Schema<IJob>(
     excerpt: { type: String, required: true },
     company: { type: CompanySchema, required: true },
     detail: { type: DetailSchema, required: true },
+    tags: {
+      type: [String],
+      default: []
+    },
   },
   {
     timestamps: true,

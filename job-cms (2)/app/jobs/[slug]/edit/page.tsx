@@ -2,36 +2,39 @@
 
 import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { JobForm } from "@/components/job-form"
 
-export default function EditJobPage({ params }: { params: { id: string } }) {
+export default function EditJobPage({ params }: { params: { slug: string } }) {
   const router = useRouter()
-  const unwrappedParams = use(params) as { id: string }// ✅ Unwrap the Promise
-  const id = unwrappedParams.id // ✅ Access the property safely
+  const slug = params.slug
+
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchJob() {
       try {
-        const response = await fetch(`/api/jobs/${id}`)
+        console.log("🔍 Fetching job with slug:", slug)
+        const response = await fetch(`/api/jobs/${slug}`)
         if (!response.ok) {
           throw new Error('Failed to fetch job')
         }
         const data = await response.json()
+        console.log("📋 Job data received:", data)
+        console.log("🏷️ Tags in fetched job:", data.tags)
         setJob(data)
       } catch (error) {
-        console.error("Error fetching job:", error)
+        console.error("❌ Error fetching job:", error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchJob()
-  }, [id])
+  }, [slug])
 
   if (loading) {
     return <div className="flex justify-center p-8">Loading job details...</div>

@@ -33,10 +33,82 @@ export async function createJob(jobData: Omit<JobType, "_id" | "createdAt" | "up
   return newJob.save()
 }
 
-// Update job
-export async function updateJob(id: string, jobData: Partial<JobType>) {
-  await dbConnect()
-  return Job.findByIdAndUpdate(id, { ...jobData, updatedAt: new Date() }, { new: true })
+// Update job function with fixed tags handling
+export async function updateJob(identifier: string, jobData: Partial<JobType>) {
+  await dbConnect();
+  console.log("🔄 Starting update with identifier:", identifier);
+  
+  try {
+    // Create a clean update object
+    const updateData = { ...jobData };
+    
+    // Explicitly preserve tags
+    const tagsToSave = Array.isArray(jobData.tags) ? [...jobData.tags] : [];
+    console.log("🏷️ Tags before MongoDB operation:", tagsToSave);
+    
+    // Make sure _id is removed
+    if (updateData._id) {
+      delete updateData._id;
+    }
+    
+    // CRITICAL: Explicitly set tags in the update
+    updateData.tags = tagsToSave;
+    
+    // Add timestamp
+    updateData.updatedAt = new Date();
+    
+    // Log the final update data
+    console.log("📦 Data being sent to MongoDB:", JSON.stringify(updateData, null, 2));
+
+    // Try to find by MongoDB _id first, then by slug
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(identifier);
+    
+    let query;
+    if (isValidObjectId) {
+      console.log("🔍 Using ObjectId for lookup");
+      query = { _id: identifier };
+    } else {
+      console.log("🔍 Using slug for lookup");
+      query = { slug: identifier };
+    }
+    
+    console.log("🔎 Query:", query);
+    
+    // Direct document replacement approach - more reliable for arrays
+    const result = await Job.findOneAndUpdate(
+      query,
+      // Use $set for all fields individually to ensure arrays are handled correctly
+      {
+        $set: {
+          name: updateData.name,
+          slug: updateData.slug,
+          location: updateData.location,
+          category: updateData.category,
+          salary: updateData.salary,
+          description: updateData.description,
+          excerpt: updateData.excerpt,
+          company: updateData.company,
+          detail: updateData.detail,
+          tags: tagsToSave,  // Explicitly set tags
+          updatedAt: updateData.updatedAt
+        }
+      },
+      { 
+        new: true,
+        runValidators: true
+      }
+    );
+    
+    console.log("✅ MongoDB operation result:", result ? "Document updated" : "No document found");
+    if (result) {
+      console.log("🏷️ Tags after update:", result.tags);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("❌ Error in updateJob:", error);
+    throw error;
+  }
 }
 
 // Delete job

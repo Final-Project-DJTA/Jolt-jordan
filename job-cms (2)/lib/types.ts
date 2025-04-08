@@ -29,6 +29,7 @@ export type JobType = {
   excerpt: string
   company: Company
   detail: Detail
+  tags: string[]
   createdAt: Date
   updatedAt: Date
 }

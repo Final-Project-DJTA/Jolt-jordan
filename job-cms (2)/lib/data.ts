@@ -13,6 +13,7 @@ export const currentUser: UserType = {
     bio: "Experienced HR Manager with 5+ years in tech recruitment",
     skills: ["Recruitment", "HR Management", "Talent Acquisition"],
   },
+  user: undefined
 }
 
 // Mock job categories
@@ -65,6 +66,7 @@ export const jobs: JobType[] = [
     },
     createdAt: new Date("2023-01-15"),
     updatedAt: new Date("2023-01-20"),
+    tags: []
   },
   {
     _id: "2",
@@ -105,6 +107,7 @@ export const jobs: JobType[] = [
     },
     createdAt: new Date("2023-02-10"),
     updatedAt: new Date("2023-02-15"),
+    tags: []
   },
   {
     _id: "3",
@@ -140,6 +143,7 @@ export const jobs: JobType[] = [
     },
     createdAt: new Date("2023-03-05"),
     updatedAt: new Date("2023-03-10"),
+    tags: []
   },
   {
     _id: "4",
@@ -175,6 +179,7 @@ export const jobs: JobType[] = [
     },
     createdAt: new Date("2023-04-20"),
     updatedAt: new Date("2023-04-25"),
+    tags: []
   },
 ]
 
