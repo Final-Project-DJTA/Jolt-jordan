@@ -1,50 +1,43 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import type { JobType, BookmarkStatus } from "@/types"
-import { Bookmark, MapPin, Calendar, Building, Wallet, Star } from "lucide-react"
+import { Bookmark, MapPin, Calendar, Building, Wallet, Trash2 } from "lucide-react"
 import { motion } from "framer-motion"
 import Confetti from "@/components/ui/confetti"
+import { JobType } from "@/types"
+import { useBookmark } from "@/context/BookmarkContext"
 
 interface JobCardProps {
   job: JobType
+  isInBookmarkPage?: boolean
 }
 
-export default function JobCard({ job }: JobCardProps) {
-  const [bookmarkStatus, setBookmarkStatus] = useState<BookmarkStatus>("none")
-  const [isHovered, setIsHovered] = useState(false)
+export default function JobCard({ job, isInBookmarkPage = false }: JobCardProps) {
+  const { isBookmarked, addBookmark, removeBookmark } = useBookmark()
+  const [bookmarked, setBookmarked] = useState(() => isBookmarked(job._id))
   const [showConfetti, setShowConfetti] = useState(false)
   const [confettiPosition, setConfettiPosition] = useState({ x: 0, y: 0 })
+  const [isHovered, setIsHovered] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
-  const userId = "mock-user-id"
-
-  const handleBookmark = async (status: BookmarkStatus, e: React.MouseEvent) => {
-    const newStatus = status === bookmarkStatus ? "none" : status
-
-    try {
-      await fetch("/api/bookmark", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
-        body: JSON.stringify({ jobId: job._id, status: newStatus }),
-      })
-      setBookmarkStatus(newStatus)
-
-      if (newStatus === "interested") {
-        setConfettiPosition({ x: e.clientX, y: e.clientY })
-        setShowConfetti(true)
-      }
-    } catch (error) {
-      console.error("Bookmark update failed", error)
+  const handleBookmark = async (e: React.MouseEvent) => {
+    if (bookmarked) return
+    const success = await addBookmark(job._id)
+    if (success) {
+      setBookmarked(true)
+      setConfettiPosition({ x: e.clientX, y: e.clientY })
+      setShowConfetti(true)
     }
+  }
+
+  const handleRemove = async () => {
+    const success = await removeBookmark(job._id)
+    if (success) setBookmarked(false)
   }
 
   const formatDate = (date: Date) =>
@@ -54,24 +47,24 @@ export default function JobCard({ job }: JobCardProps) {
       day: "numeric",
     })
 
-    const formatSalary = (salary: string) => {
-      const parts = salary
-        .replace(/Rp|\s/g, "")
-        .split("-")
-        .map((s) => s.trim().replace(/,/g, "")) // ganti koma, jangan titik
-        .map((n) => Number(n))
-    
-      if (parts.length === 2) {
-        const [min, max] = parts
-        return `Rp ${min.toLocaleString("id-ID")} - Rp ${max.toLocaleString("id-ID")}`
-      }
-    
-      if (parts.length === 1) {
-        return `Rp ${parts[0].toLocaleString("id-ID")}`
-      }
-    
-      return salary
-    }    
+  const formatSalary = (salary: string) => {
+    const parts = salary
+      .replace(/Rp|\s/g, "")
+      .split("-")
+      .map((s) => s.trim().replace(/,/g, ""))
+      .map((n) => Number(n))
+
+    if (parts.length === 2) {
+      const [min, max] = parts
+      return `Rp ${min.toLocaleString("id-ID")} - Rp ${max.toLocaleString("id-ID")}`
+    }
+
+    if (parts.length === 1) {
+      return `Rp ${parts[0].toLocaleString("id-ID")}`
+    }
+
+    return salary
+  }
 
   return (
     <>
@@ -116,43 +109,37 @@ export default function JobCard({ job }: JobCardProps) {
                     </div>
                   </div>
                 </div>
+
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
+                    disabled={bookmarked}
                     className={`rounded-full transition-all duration-300 ${
-                      bookmarkStatus === "interested"
-                        ? "text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-700"
+                      bookmarked
+                        ? "text-yellow-600 bg-yellow-100"
                         : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                     }`}
-                    onClick={(e) => handleBookmark("interested", e)}
+                    onClick={handleBookmark}
                   >
                     <motion.div
-                      animate={bookmarkStatus === "interested" ? { scale: [1, 1.5, 1] } : {}}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <Star className="h-4 w-4" />
-                    </motion.div>
-                    <span className="sr-only">Interested</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`rounded-full transition-all duration-300 ${
-                      bookmarkStatus === "not_interested"
-                        ? "text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
-                    onClick={(e) => handleBookmark("not_interested", e)}
-                  >
-                    <motion.div
-                      animate={bookmarkStatus === "not_interested" ? { scale: [1, 1.5, 1] } : {}}
+                      animate={bookmarked ? { scale: [1, 1.5, 1] } : {}}
                       transition={{ duration: 0.5 }}
                     >
                       <Bookmark className="h-4 w-4" />
                     </motion.div>
-                    <span className="sr-only">Not Interested</span>
                   </Button>
+
+                  {isInBookmarkPage && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemove}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -181,7 +168,9 @@ export default function JobCard({ job }: JobCardProps) {
               className="border-t border-gray-100 bg-gray-50 p-4 flex justify-between items-center"
               animate={isHovered ? { backgroundColor: "rgba(212, 175, 55, 0.1)" } : {}}
             >
-              <div className="text-sm text-gray-500">{job.detail.requirements.length} requirements</div>
+              <div className="text-sm text-gray-500">
+                {job.detail?.requirements?.length || 0} requirements
+              </div>
               <Link href={`/jobs/${job.slug}`}>
                 <Button className="bg-primary hover:bg-primary/90 transition-all duration-300">
                   View Details

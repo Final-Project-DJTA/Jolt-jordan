@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
 import CursorEffect from "@/components/ui/cursor-effect"
 import JobAlert from "@/components/ui/job-alert"
+import { BookmarkProvider } from "@/context/BookmarkContext"
+import { ToastContainer } from "react-toastify"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -46,12 +48,18 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <BookmarkProvider>
           <CursorEffect />
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <JobAlert />
+          <ToastContainer/>
+          </BookmarkProvider>
         </ThemeProvider>
+        
       </body>
     </html>
   )
 }
+
+import './globals.css'

@@ -1,13 +1,11 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { JobType, BookmarkStatus } from "@/types"
 import {
   MapPin,
   Calendar,
@@ -18,33 +16,29 @@ import {
   CheckCircle,
   ListChecks,
   Gift,
-  Star,
-  Ban,
+  Bookmark,
 } from "lucide-react"
+import Confetti from "@/components/ui/confetti"
+import { JobType } from "@/types"
+import { useBookmark } from "@/context/BookmarkContext"
 
 type JobDetailProps = {
   job: JobType
 }
 
 export default function JobDetail({ job }: JobDetailProps) {
-  const [bookmarkStatus, setBookmarkStatus] = useState<BookmarkStatus>("none")
+  const { isBookmarked, addBookmark } = useBookmark()
+  const bookmarked = isBookmarked(job._id)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [confettiPos, setConfettiPos] = useState({ x: 0, y: 0 })
 
-  const updateBookmarkStatus = async (status: BookmarkStatus) => {
-    const userId = "mock-user-id"
-    try {
-      const res = await fetch("/api/bookmark", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
-        body: JSON.stringify({ jobId: job._id, status }),
-      })
-
-      if (!res.ok) throw new Error("Failed to update bookmark")
-      setBookmarkStatus((prev) => (prev === status ? "none" : status))
-    } catch (err) {
-      console.error(err)
+  const handleBookmark = async (e: React.MouseEvent) => {
+    if (bookmarked) return
+    const success = await addBookmark(job._id)
+    if (success) {
+      // setBookmarked(true)
+      setConfettiPos({ x: e.clientX, y: e.clientY })
+      setShowConfetti(true)
     }
   }
 
@@ -82,28 +76,16 @@ export default function JobDetail({ job }: JobDetailProps) {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
+                  disabled={bookmarked}
+                  onClick={handleBookmark}
                   className={`${
-                    bookmarkStatus === "interested"
-                      ? "text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-700"
+                    bookmarked
+                      ? "text-yellow-600 bg-yellow-100"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
                   }`}
-                  onClick={() => updateBookmarkStatus("interested")}
                 >
-                  <Star className="h-4 w-4 mr-2" />
-                  {bookmarkStatus === "interested" ? "Interested" : "Mark Interested"}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className={`${
-                    bookmarkStatus === "not_interested"
-                      ? "text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                  }`}
-                  onClick={() => updateBookmarkStatus("not_interested")}
-                >
-                  <Ban className="h-4 w-4 mr-2" />
-                  {bookmarkStatus === "not_interested" ? "Not Interested" : "Mark Not Interested"}
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  {bookmarked ? "Bookmarked" : "Bookmark"}
                 </Button>
               </div>
             </div>
@@ -251,6 +233,14 @@ export default function JobDetail({ job }: JobDetailProps) {
           </CardContent>
         </Card>
       </div>
+
+      <Confetti
+        isActive={showConfetti}
+        x={confettiPos.x}
+        y={confettiPos.y}
+        onComplete={() => setShowConfetti(false)}
+      />
     </div>
   )
 }
+
