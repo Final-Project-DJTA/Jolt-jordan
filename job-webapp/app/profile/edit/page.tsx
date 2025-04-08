@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const formSchema = z.object({
   avatar: z.string().optional(),
   location: z.string().optional(),
-  bio: z.string().max(500, "Bio cannot exceed 500 characters").optional(),
+  jobPosition: z.string().max(500, "Job position cannot exceed 500 characters").optional(), // Changed from bio to jobPosition
   skills: z.string().optional(), // Will be split into array before submission
 })
 
@@ -46,7 +46,7 @@ export default function EditProfilePage() {
     defaultValues: {
       avatar: "",
       location: "",
-      bio: "",
+      jobPosition: "", // Changed from bio to jobPosition
       skills: "",
     },
   })
@@ -78,7 +78,7 @@ export default function EditProfilePage() {
         form.reset({
           avatar: data.profile?.avatar || "",
           location: data.profile?.location || "",
-          bio: data.profile?.bio || "",
+          jobPosition: data.profile?.jobPosition || "", // Changed from bio to jobPosition
         })
 
         // Set skills input (comma-separated string)
@@ -108,7 +108,7 @@ export default function EditProfilePage() {
       const updatedProfile = {
         avatar: values.avatar,
         location: values.location,
-        bio: values.bio,
+        jobPosition: values.jobPosition, // Changed from bio to jobPosition
         skills,
       }
 
@@ -253,22 +253,22 @@ export default function EditProfilePage() {
                 )}
               />
 
-              {/* Bio Field */}
+              {/* Job Position Field */}
               <FormField
                 control={form.control}
-                name="bio"
+                name="jobPosition" // Changed from bio to jobPosition
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bio</FormLabel>
+                    <FormLabel>Job Position</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Tell us about yourself..."
+                        placeholder="Your current or desired job position..."
                         className="resize-y min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      {form.watch("bio")?.length || 0}/500 characters
+                      {form.watch("jobPosition")?.length || 0}/500 characters
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

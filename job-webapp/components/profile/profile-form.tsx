@@ -29,7 +29,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     email: user.email,
     // phoneNumber: user.phoneNumber,
     location: user.profile?.location || "",
-    bio: user.profile?.bio || "",
+    jobPosition: user.profile?.jobPosition || "", // Changed from bio to jobPosition
     skills: user.profile?.skills?.join(", ") || "",
   });
 
@@ -120,14 +120,14 @@ export default function ProfileForm({ user }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bio">
-              Your last job title / the job title you seek
+            <Label htmlFor="jobPosition">
+              Your Job Position
             </Label>
             <Input
-              id="bio"
-              name="bio"
-              placeholder="Tell us about yourself"
-              value={formData.bio}
+              id="jobPosition" // Changed from bio to jobPosition
+              name="jobPosition" // Changed from bio to jobPosition
+              placeholder="Your current or desired job position"
+              value={formData.jobPosition} // Changed from bio to jobPosition
               onChange={handleChange}
             />
           </div>
