@@ -6,6 +6,7 @@ export type CustomError = {
 };
 
 export type UserType = {
+  _id?: string;
   name: string;
   email: string;
   username: string;
@@ -15,7 +16,34 @@ export type UserType = {
   role?: string;
   verificationToken?: string;
   tokenExpires?: Date;
-  profile?: ProfileType;
+}
+
+export type PersonalInfoType = {
+  fullName: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  linkedin?: string;
+  website?: string;
+  summary?: string;
+};
+
+export type EducationType = {
+  degree: string;
+  institution: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  description?: string;
+};
+
+export type ExperienceType = {
+  title: string;
+  company: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  description: string;
 };
 
 export type ProfileType = {
@@ -23,10 +51,13 @@ export type ProfileType = {
   avatar?: string;
   location?: string;
   bio?: string;
-  resume?: string;
   skills?: string[];
+  tags?: string[];
   appliedJobs?: string[];
   savedJobs?: string[];
+  personalInfo?: PersonalInfoType;
+  education?: EducationType[];
+  experience?: ExperienceType[];
 };
 
 export type JobType = {

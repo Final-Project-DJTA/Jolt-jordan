@@ -53,14 +53,14 @@ class UserModel {
 
       const result = await this.collection().insertOne(newUser);
       
-      // Create a profile for the new user
+      // Create a profile for the new user - enforcing one-to-one relationship
       try {
         await ProfileModel.create(result.insertedId.toString());
         console.log(`Profile created for user ID: ${result.insertedId}`);
       } catch (error) {
         console.error("Failed to create profile:", error);
-        // Don't fail user creation if profile fails
-        // You could also choose to delete the user if profile creation fails
+        // You could choose to delete the user if profile creation fails
+        // to maintain data consistency, but that's a design decision
       }
       
       return "Register Success";
