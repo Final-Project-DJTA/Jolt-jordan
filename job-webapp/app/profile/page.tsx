@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react"
 import ProfileHeader from "@/components/profile/profile-header"
@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Spinner } from "@/components/ui/spinner"
 import JobPreferenceTags from "@/components/profile/job-preference-tags"
 import { toast } from "@/hooks/use-toast"
+import { Suspense } from "react"
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
@@ -71,7 +72,10 @@ export default function ProfilePage() {
       }
     };
 
-    fetchProfile();
+    // Only run fetch on client side
+    if (typeof window !== 'undefined') {
+      fetchProfile();
+    }
   }, [router, searchParams]);
 
   if (isLoading) {

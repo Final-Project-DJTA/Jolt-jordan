@@ -1,4 +1,8 @@
 "use client";
+
+// Add dynamic export to prevent static generation
+export const dynamic = "force-dynamic";
+
 import { ChangeEvent, useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import type { JobType } from "@/types";
@@ -15,8 +19,6 @@ export default function CreateResume() {
       const data = await res.json();
 
       const jobList = Array.isArray(data) ? data.map((item) => item.job) : [];
-      // console.log(jobList);
-
       setJobs(jobList);
     } catch (err) {
       console.error("Failed to fetch bookmarks:", err);
@@ -25,10 +27,6 @@ export default function CreateResume() {
       setLoading(false);
     }
   };
-
-  // useEffect(() => {
-  //   fetchBookmarks();
-  // }, []);
 
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -48,8 +46,7 @@ export default function CreateResume() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
   const [activeJobForCV, setActiveJobForCV] = useState<JobType | null>(null);
-
-  console.log(jobs, "bookmark jobs");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -70,28 +67,19 @@ export default function CreateResume() {
         }
 
         const data = await response.json();
-        console.log("Profile API response:", data);
 
-        // Properly structure the user and profile data
         if (data && data.profile) {
-          // Data already has the expected structure
           const {
             personalInfo = {},
             education = [],
             experience = [],
             skills = [],
           } = data.profile;
-          console.log("Personal Info:", personalInfo);
-          console.log("Education:", education);
-          console.log("Experience:", experience);
-          console.log("Skills:", skills);
 
-          // Set education, experience, and skills data
           setEducation(Array.isArray(education) ? education : []);
           setExperience(Array.isArray(experience) ? experience : []);
           setSkills(Array.isArray(skills) ? skills : []);
 
-          // Set form data
           setFormData({
             name: personalInfo?.fullName || data.name || "",
             position: data.profile?.jobPosition || "",
@@ -121,7 +109,6 @@ export default function CreateResume() {
     import("html2pdf.js").then((html2pdfModule) => {
       const html2pdf = html2pdfModule.default || html2pdfModule;
 
-      // Add fallback for when name is undefined
       const fileName = formData?.name
         ? formData.name.replace(/\s+/g, "_")
         : "Resume";
@@ -144,7 +131,6 @@ export default function CreateResume() {
       setGenerationError("");
       setActiveJobForCV(job);
 
-      // Prepare the current CV data and job information
       const cvData = {
         personalInfo: {
           fullName: formData.name,
@@ -171,7 +157,6 @@ export default function CreateResume() {
         },
       };
 
-      // Send to Gemini AI API
       const response = await fetch("/api/gemini-ai/optimize-cv", {
         method: "POST",
         headers: {
@@ -187,10 +172,8 @@ export default function CreateResume() {
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Update CV data with AI optimized content
         const optimizedData = result.data;
 
-        // Update state variables
         setFormData({
           name: optimizedData.personalInfo.fullName || formData.name,
           position: optimizedData.personalInfo.position || formData.position,
@@ -202,12 +185,10 @@ export default function CreateResume() {
           github: optimizedData.personalInfo.github || formData.github,
         });
 
-        // Update skills
         if (optimizedData.skills && Array.isArray(optimizedData.skills)) {
           setSkills(optimizedData.skills);
         }
 
-        // Update experience if provided
         if (
           optimizedData.experience &&
           Array.isArray(optimizedData.experience)
@@ -215,12 +196,10 @@ export default function CreateResume() {
           setExperience(optimizedData.experience);
         }
 
-        // Update education if provided
         if (optimizedData.education && Array.isArray(optimizedData.education)) {
           setEducation(optimizedData.education);
         }
 
-        // Add toast notification
         toast({
           title: "CV Optimized Successfully",
           description: `Your CV has been tailored for the ${job.name} position at ${job.company.name}.`,
@@ -235,19 +214,97 @@ export default function CreateResume() {
     }
   };
 
-  // Format date from YYYY-MM format to more readable version
+  const handleSaveToProfile = async () => {
+    try {
+      setIsSaving(true);
+
+      const profileData = {
+        personalInfo: {
+          fullName: formData.name,
+          position: formData.position,
+          location: formData.location,
+          email: formData.email,
+          phone: formData.phone,
+          linkedin: formData.linkedin,
+          github: formData.github,
+          summary: formData.summary,
+        },
+        education,
+        experience,
+        skills,
+        jobPosition: formData.position,
+      };
+
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update profile: ${response.status}`);
+      }
+
+      toast({
+        title: "Profile Updated",
+        description: "Your CV data has been saved to your profile successfully.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error saving to profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save CV data to your profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
 
     try {
-      const [year, month] = dateString.split("-");
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
-      });
+      if (dateString.includes("-")) {
+        const [year, month] = dateString.split("-");
+        if (year && month) {
+          const date = new Date(parseInt(year), parseInt(month) - 1);
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
+          }
+        }
+      } else if (dateString.includes("/")) {
+        const parts = dateString.split("/");
+        if (parts.length >= 2) {
+          const date = new Date(parts.join("/"));
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
+          }
+        }
+      } else {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+          });
+        }
+      }
+
+      return dateString;
     } catch (e) {
-      return dateString; // Return original if can't parse
+      console.warn("Date parsing error:", e);
+      return dateString;
     }
   };
 
@@ -261,6 +318,23 @@ export default function CreateResume() {
 
   return (
     <>
+      {/* Loading Overlay */}
+      {(isGenerating || isSaving) && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <Spinner size="lg" className="mb-4" />
+            <h3 className="text-xl font-medium">
+              {isGenerating ? "Optimizing your CV..." : "Saving to profile..."}
+            </h3>
+            <p className="text-gray-500 mt-2">
+              {isGenerating
+                ? "Our AI is tailoring your CV for the selected job position."
+                : "Updating your profile data with the current CV information."}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-center min-h-screen bg-gray-100 p-8 gap-4 w-full">
         {/* CV Section */}
         <div
@@ -422,32 +496,84 @@ export default function CreateResume() {
             </div>
           </div>
           <h2 className="text-lg font-bold mb-2 mt-4"> Your Bookmark</h2>
-          {/* create card in here */}
           <div>
             {jobs.map((job) => (
               <div
                 key={job._id}
                 className="bg-gray-100 p-4 rounded-lg shadow-md mb-4"
               >
-                <h3 className="text-md font-medium">{job.name}</h3>
-                <p className="text-sm text-gray-600">{job.category}</p>
+                <h3 className="text-md font-medium">{job.company.name}</h3>
+                <p className="text-sm text-gray-600">{job.company.headquarters}</p>
+                <div className="mt-1 mb-2 text-xs text-gray-500">{job.name}</div>
                 <button
                   onClick={() => handleGenerateCV(job)}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 ease-in-out mt-2"
                   disabled={isGenerating}
                 >
-                  {isGenerating ? "Generating..." : "Generate CV"}
+                  {isGenerating && job._id === activeJobForCV?._id ? (
+                    <>
+                      <span className="inline-block animate-pulse mr-2">⟳</span>
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate CV"
+                  )}
                 </button>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end gap-4 mb-4">
+        <button
+          onClick={handleSaveToProfile}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center"
+          disabled={isSaving || isGenerating}
+        >
+          {isSaving ? (
+            <>
+              <span className="inline-block animate-spin mr-2">⟳</span>
+              Saving...
+            </>
+          ) : (
+            <>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                />
+              </svg>
+              Save to Profile
+            </>
+          )}
+        </button>
         <button
           onClick={handleDownloadPDF}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center"
+          disabled={isSaving || isGenerating}
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
           Download PDF
         </button>
       </div>

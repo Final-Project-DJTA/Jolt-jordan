@@ -15,12 +15,24 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
+    ],
   },
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  unstable_runtimeJS: true,
 }
 
 mergeConfig(nextConfig, userConfig)

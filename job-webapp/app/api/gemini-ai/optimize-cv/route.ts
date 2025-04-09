@@ -97,6 +97,8 @@ export async function POST(req: Request) {
     4. Making sure all content is professional and in English
     5. Ensuring the CV is tailored specifically for the job requirements
     
+    IMPORTANT: All dates must be formatted as YYYY-MM (for example, "2022-05" for May 2022).
+    
     Return only a JSON object with the optimized CV data in this format:
     {
       "personalInfo": {
@@ -115,8 +117,8 @@ export async function POST(req: Request) {
           "title": "...",
           "company": "...",
           "location": "...",
-          "startDate": "...",
-          "endDate": "...",
+          "startDate": "YYYY-MM",
+          "endDate": "YYYY-MM",
           "description": "..."
         }
       ],
@@ -125,8 +127,8 @@ export async function POST(req: Request) {
           "degree": "...",
           "institution": "...",
           "location": "...",
-          "startDate": "...",
-          "endDate": "...",
+          "startDate": "YYYY-MM",
+          "endDate": "YYYY-MM",
           "description": "..."
         }
       ]
