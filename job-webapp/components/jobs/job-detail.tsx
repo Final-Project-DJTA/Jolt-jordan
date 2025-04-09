@@ -1,79 +1,154 @@
-"use client"
-
-import Image from "next/image"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+"use client";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  MapPin,
-  Calendar,
-  Building,
-  Wallet,
-  Globe,
-  Users,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   CheckCircle,
+  Briefcase,
   ListChecks,
   Gift,
+  Building,
+  MapPin,
+  Globe,
+  Users,
   Bookmark,
-} from "lucide-react"
-import Confetti from "@/components/ui/confetti"
-import { JobType } from "@/types"
-import { useBookmark } from "@/context/BookmarkContext"
+} from "lucide-react";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { useBookmark } from "@/context/BookmarkContext";
+import Confetti from "@/components/ui/confetti";
+import { toast } from "@/hooks/use-toast";
+import type { JobType } from "@/types";
+import { useRouter } from "next/navigation";
 
-type JobDetailProps = {
-  job: JobType
+interface JobDetailProps {
+  job: JobType;
 }
 
 export default function JobDetail({ job }: JobDetailProps) {
-  const { isBookmarked, addBookmark } = useBookmark()
-  const bookmarked = isBookmarked(job._id)
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [confettiPos, setConfettiPos] = useState({ x: 0, y: 0 })
-  const [applied, setApplied] = useState(false)
+  const { isBookmarked, addBookmark } = useBookmark();
+  const bookmarked = isBookmarked(job._id);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiPos, setConfettiPos] = useState({ x: 0, y: 0 });
+  const [applied, setApplied] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkApplicationStatus = async () => {
+      try {
+        const response = await fetch(`/api/profile`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.profile && data.profile.appliedJobs) {
+            setApplied(data.profile.appliedJobs.includes(job._id));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check application status:", error);
+      }
+    };
+
+    checkApplicationStatus();
+  }, [job._id]);
 
   const handleApply = async () => {
     try {
-      const res = await fetch("/api/jobs/apply", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ jobId: job._id }),
-      })      
+      setIsApplying(true);
+      });
       
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to apply for this job",
+            variant: "destructive",
+          });
+          router.push("/login");
+          return;
+        }
+        
+        if (res.status === 400 && data.message.includes("complete your profile")) {
+          toast({
+            title: "Profile Incomplete",
+            description: data.message,
+            variant: "destructive",
+          });
+          router.push("/profile/edit");
+          return;
+        }
+        
+        throw new Error(data.message);
+      }
   
       setApplied(true);
-      alert("Successfully applied!");
+      
+      toast({
+        title: "Application Submitted",
+        description: "Your job application has been successfully submitted!",
+        variant: "default",
+      });
+      
+      const applyButton = document.getElementById("apply-button");
+      if (applyButton) {
+        const rect = applyButton.getBoundingClientRect();
+        setConfettiPos({ 
+          x: rect.left + rect.width / 2, 
+          y: rect.top + rect.height / 2 
+        });
+        setShowConfetti(true);
+      }
     } catch (err: any) {
-      alert(err.message || "Failed to apply");
+      toast({
+        title: "Application Failed",
+        description: err.message || "Failed to apply for this job",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplying(false);
     }
-  };  
+  };
 
   const handleBookmark = async (e: React.MouseEvent) => {
-    if (bookmarked) return
-    const success = await addBookmark(job._id)
+    if (bookmarked) return;
+    const success = await addBookmark(job._id);
     if (success) {
-      // setBookmarked(true)
-      setConfettiPos({ x: e.clientX, y: e.clientY })
-      setShowConfetti(true)
+      setConfettiPos({ x: e.clientX, y: e.clientY });
+      setShowConfetti(true);
     }
-  }
+  };
 
   const formatDate = (date: Date) =>
     new Date(date).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
-    })
+    });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 container mx-auto py-12">
-      <div className="lg:col-span-2 space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 container mx-auto py-12">
+      <div className="md:col-span-2 space-y-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -120,11 +195,11 @@ export default function JobDetail({ job }: JobDetailProps) {
                 <span>{job.location}</span>
               </div>
               <div className="flex items-center text-gray-600">
-                <Wallet className="h-4 w-4 mr-1" />
+                <Briefcase className="h-4 w-4 mr-1" />
                 <span>{job.salary}</span>
               </div>
               <div className="flex items-center text-gray-600">
-                <Calendar className="h-4 w-4 mr-1" />
+                <ListChecks className="h-4 w-4 mr-1" />
                 <span>Posted {formatDate(job.createdAt)}</span>
               </div>
             </div>
@@ -192,17 +267,19 @@ export default function JobDetail({ job }: JobDetailProps) {
             <CardTitle>Apply for this job</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* <Button className="w-full bg-primary hover:bg-primary/90">Apply Now</Button> */}
             <Button
+              id="apply-button"
               className="w-full bg-primary hover:bg-primary/90"
               onClick={handleApply}
-              disabled={applied}
+              disabled={applied || isApplying}
             >
-              {applied ? "Applied" : "Apply Now"}
+              {isApplying ? "Applying..." : applied ? "Applied" : "Apply Now"}
             </Button>
 
             <p className="text-sm text-gray-500 mt-4">
-              This will redirect you to the company&apos;s application process.
+              {applied 
+                ? "Your application has been submitted." 
+                : "This will add your profile to the company's applicant list."}
             </p>
           </CardContent>
         </Card>
@@ -270,6 +347,6 @@ export default function JobDetail({ job }: JobDetailProps) {
         onComplete={() => setShowConfetti(false)}
       />
     </div>
-  )
+  );
 }
 

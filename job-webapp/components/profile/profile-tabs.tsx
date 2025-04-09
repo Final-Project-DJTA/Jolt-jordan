@@ -5,6 +5,8 @@ import type { UserType } from "@/types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, Upload, Download } from "lucide-react";
+import SavedJobsList from "@/components/profile/saved-jobs-list";
+import AppliedJobsList from "@/components/profile/applied-jobs-list"; // Import the new component
 
 interface ProfileTabsProps {
   user: UserType | null;
@@ -25,7 +27,7 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
       <TabsList className="grid grid-cols-3 w-full max-w-md">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="applications">Applications</TabsTrigger>
-        <TabsTrigger value="saved">Saved Jobs</TabsTrigger>
+        <TabsTrigger value="saved">Notified Jobs</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile" className="mt-6">
@@ -103,48 +105,23 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
           <h2 className="text-xl font-semibold text-primary mb-4">
             Job Applications
           </h2>
-          {user.profile && user.profile.appliedJobs && user.profile.appliedJobs.length > 0 ? (
-            <div>
-              {/* Job applications list would go here */}
-              <p>You have applied to {user.profile.appliedJobs.length} jobs.</p>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">
-                You haven&apos;t applied to any jobs yet.
-              </p>
-              <Link href="/jobs">
-                <Button className="bg-primary hover:bg-primary/90">
-                  Browse Jobs
-                </Button>
-              </Link>
-            </div>
-          )}
+          
+          {/* Use our new AppliedJobsList component */}
+          <AppliedJobsList 
+            appliedJobIds={(user.profile?.appliedJobs || []).filter(id => id)}
+          />
         </div>
       </TabsContent>
 
       <TabsContent value="saved" className="mt-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-xl font-semibold text-primary mb-4">
-            Saved Jobs
+            Notified Jobs
           </h2>
-          {user.profile && user.profile.savedJobs && user.profile.savedJobs.length > 0 ? (
-            <div>
-              {/* Saved jobs list would go here */}
-              <p>You have saved {user.profile.savedJobs.length} jobs.</p>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">
-                You haven&apos;t saved any jobs yet.
-              </p>
-              <Link href="/jobs">
-                <Button className="bg-primary hover:bg-primary/90">
-                  Browse Jobs
-                </Button>
-              </Link>
-            </div>
-          )}
+          
+          <SavedJobsList 
+            savedJobIds={(user.profile?.savedJobs || []).filter(id => id)}
+          />
         </div>
       </TabsContent>
     </Tabs>
