@@ -7,10 +7,19 @@ import { Button } from "@/components/ui/button";
 import { FileText, Upload, Download } from "lucide-react";
 
 interface ProfileTabsProps {
-  user: UserType;
+  user: UserType | null;
 }
 
 export default function ProfileTabs({ user }: ProfileTabsProps) {
+  // Add null checks to prevent errors
+  if (!user) {
+    return (
+      <div className="w-full bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <p className="text-gray-500 text-center">Loading profile data...</p>
+      </div>
+    );
+  }
+
   return (
     <Tabs defaultValue="profile" className="w-full">
       <TabsList className="grid grid-cols-3 w-full max-w-md">
@@ -78,10 +87,6 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
                 <p className="text-sm text-gray-500">Email</p>
                 <p>{user.email}</p>
               </div>
-              {/* <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p>{user.phoneNumber}</p>
-              </div> */}
               {user.profile?.location && (
                 <div>
                   <p className="text-sm text-gray-500">Location</p>
@@ -98,7 +103,7 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
           <h2 className="text-xl font-semibold text-primary mb-4">
             Job Applications
           </h2>
-          {user.profile?.appliedJobs && user.profile.appliedJobs.length > 0 ? (
+          {user.profile && user.profile.appliedJobs && user.profile.appliedJobs.length > 0 ? (
             <div>
               {/* Job applications list would go here */}
               <p>You have applied to {user.profile.appliedJobs.length} jobs.</p>
@@ -123,7 +128,7 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
           <h2 className="text-xl font-semibold text-primary mb-4">
             Saved Jobs
           </h2>
-          {user.profile?.savedJobs && user.profile.savedJobs.length > 0 ? (
+          {user.profile && user.profile.savedJobs && user.profile.savedJobs.length > 0 ? (
             <div>
               {/* Saved jobs list would go here */}
               <p>You have saved {user.profile.savedJobs.length} jobs.</p>

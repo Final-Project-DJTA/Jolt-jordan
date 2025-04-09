@@ -1,169 +1,176 @@
+import { database } from "@/db/config/mongodb";
+import { ObjectId } from "mongodb";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { errHandler } from "@/helpers/errHandler";
+import jwt from "jsonwebtoken";
 import { verifyWithJose } from "@/helpers/jwt";
+import { errHandler } from "@/helpers/errHandler";
 import { CustomError } from "@/types";
-import UserModel from "@/db/models/userModel";
-import ProfileModel from "@/db/models/profileModel";
+
+// Reuse the robust cookie extraction function from the tags API
+async function getUserIdFromCookies(request: Request) {
+  try {
+    // First try using the cookies API
+    const cookieStore = cookies();
+    
+    // Try to get the Authorization token first (this is what login sets)
+    let token = cookieStore.get("Authorization")?.value;
+    
+    // If Authorization token exists, extract the actual token part
+    if (token && token.startsWith("Bearer ")) {
+      token = token.substring(7);
+    }
+    
+    // If no Authorization token, try the token cookie as fallback
+    if (!token) {
+      token = cookieStore.get("token")?.value;
+    }
+    
+    // If we found a token, verify it
+    if (token) {
+      try {
+        // First try with jose (the method used in middleware)
+        const decoded = await verifyWithJose(token);
+        return decoded._id || decoded.id;
+      } catch (joseError) {
+        // Fallback to standard jwt verify
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || "");
+          return decoded._id || decoded.id;
+        } catch (jwtError) {
+          console.error("JWT verification failed:", jwtError);
+          return null;
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error extracting user ID from cookies:", error);
+    return null;
+  }
+}
 
 export async function GET(req: Request) {
-    try {
-        // Debug info
-        console.log("Profile API Request received");
-        
-        // Extract user ID from headers (set by middleware)
-        const userId = req.headers.get("x-user-id");
-        console.log("User ID from header:", userId);
-
-        if (!userId) {
-            console.log("No user ID in header - checking cookies directly");
-            
-            // Fallback: Check cookies directly
-            const cookieHeader = req.headers.get("cookie");
-            console.log("Cookie header present:", !!cookieHeader);
-            
-            if (!cookieHeader) {
-                console.log("No cookies in request");
-                return Response.json({ message: "Unauthorized" }, { status: 401 });
-            }
-            
-            const cookies = cookieHeader.split("; ").reduce((acc, cookie) => {
-                const [key, value] = cookie.split("=");
-                acc[key] = value;
-                return acc;
-            }, {} as Record<string, string>);
-            
-            const authCookie = cookies["Authorization"];
-            console.log("Auth cookie found:", !!authCookie);
-            
-            if (!authCookie) {
-                return Response.json({ message: "Unauthorized" }, { status: 401 });
-            }
-            
-            try {
-                const [type, token] = authCookie.split(" ");
-                if (type !== "Bearer") {
-                    throw new Error("Invalid token type");
-                }
-                
-                const decoded = await verifyWithJose<{_id: string}>(token);
-                console.log("Token verified manually - user ID:", decoded._id);
-                
-                // Get user info - using aggregated approach
-                const user = await UserModel.getProfile(decoded._id);
-                const profile = await ProfileModel.findByUserId(decoded._id);
-                
-                // Return aggregated structure
-                return Response.json({
-                    ...user,
-                    profile: profile || {
-                        userId: decoded._id,
-                        avatar: "",
-                        location: "",
-                        jobPosition: "", // Changed from bio to jobPosition
-                        skills: [],
-                        tags: [],
-                        appliedJobs: [],
-                        savedJobs: [],
-                        personalInfo: {},
-                        education: [],
-                        experience: []
-                    }
-                });
-            } catch (error) {
-                console.error("Token verification failed:", error);
-                return Response.json({ message: "Unauthorized" }, { status: 401 });
-            }
-        }
-
-        // If middleware successfully provided the user ID, proceed normally
-        const user = await UserModel.getProfile(userId);
-        const profile = await ProfileModel.findByUserId(userId);
-        
-        // Return aggregated structure consistently
-        return Response.json({
-            ...user,
-            profile: profile || {
-                userId,
-                avatar: "",
-                location: "",
-                jobPosition: "", // Changed from bio to jobPosition
-                skills: [],
-                tags: [],
-                appliedJobs: [],
-                savedJobs: [],
-                personalInfo: {},
-                education: [],
-                experience: []
-            }
-        });
-    } catch (error) {
-        console.error("Profile API error:", error);
-        return errHandler(error as CustomError);
+  try {
+    // Use the robust function to get userId
+    const userId = await getUserIdFromCookies(req);
+    
+    if (!userId) {
+      console.log("No user ID found in cookies - unauthorized");
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+    
+    console.log("User ID extracted successfully:", userId);
+    
+    // Use aggregation to join User collection with profiles collection
+    const usersCollection = database.collection("User");
+    
+    // Perform aggregation with $lookup
+    const aggregatedData = await usersCollection.aggregate([
+      { 
+        $match: { _id: new ObjectId(userId) } 
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "_id",
+          foreignField: "userId",
+          as: "profileData"
+        }
+      },
+      {
+        $unwind: {
+          path: "$profileData",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          email: 1,
+          username: 1,
+          role: 1,
+          telegramId: 1,
+          telegramVerified: 1,
+          profile: {
+            userId: "$profileData.userId",
+            avatar: "$profileData.avatar",
+            location: "$profileData.location",
+            jobPosition: "$profileData.jobPosition",
+            skills: "$profileData.skills",
+            tags: "$profileData.tags",
+            appliedJobs: "$profileData.appliedJobs",
+            savedJobs: "$profileData.savedJobs",
+            personalInfo: "$profileData.personalInfo",
+            education: "$profileData.education",
+            experience: "$profileData.experience",
+          }
+        }
+      }
+    ]).toArray();
+    
+    // Check if user exists
+    if (aggregatedData.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    
+    const userData = aggregatedData[0];
+    
+    // If no profile was found, create an empty profile structure
+    if (!userData.profile || !userData.profile.userId) {
+      userData.profile = {
+        userId: new ObjectId(userId),
+        avatar: "",
+        location: "",
+        jobPosition: "",
+        skills: [],
+        tags: [],
+        appliedJobs: [],
+        savedJobs: [],
+        personalInfo: {},
+        education: [],
+        experience: []
+      };
+    }
+    
+    return NextResponse.json(userData);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch profile" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PATCH(req: Request) {
-    try {
-        console.log("Profile PATCH Request received");
-        
-        // Extract user ID from headers (set by middleware)
-        const userId = req.headers.get("x-user-id");
-        console.log("User ID from header:", userId);
-
-        // If no user ID in header, try to get from cookies (same as GET)
-        if (!userId) {
-            console.log("No user ID in header for PATCH - checking cookies");
-            
-            // Fallback: Check cookies directly
-            const cookieHeader = req.headers.get("cookie");
-            console.log("Cookie header present:", !!cookieHeader);
-            
-            if (!cookieHeader) {
-                console.log("No cookies in request");
-                return Response.json({ message: "Unauthorized" }, { status: 401 });
-            }
-            
-            const cookies = cookieHeader.split("; ").reduce((acc, cookie) => {
-                const [key, value] = cookie.split("=");
-                acc[key] = value;
-                return acc;
-            }, {} as Record<string, string>);
-            
-            const authCookie = cookies["Authorization"];
-            console.log("Auth cookie found:", !!authCookie);
-            
-            if (!authCookie) {
-                return Response.json({ message: "Unauthorized" }, { status: 401 });
-            }
-            
-            try {
-                const [type, token] = authCookie.split(" ");
-                if (type !== "Bearer") {
-                    throw new Error("Invalid token type");
-                }
-                
-                const decoded = await verifyWithJose<{_id: string}>(token);
-                console.log("Token verified manually for PATCH - user ID:", decoded._id);
-                
-                // Get the data from the request body
-                const body = await req.json();
-                
-                // Update the profile with the verified user ID
-                const res = await ProfileModel.update(decoded._id, body);
-                return Response.json({ message: res });
-                
-            } catch (error) {
-                console.error("Token verification failed:", error);
-                return Response.json({ message: "Unauthorized" }, { status: 401 });
-            }
-        }
-
-        // If middleware successfully provided the user ID, proceed normally
-        const body = await req.json();
-        const res = await ProfileModel.update(userId, body);
-        return Response.json({ message: res });
-    } catch (error) {
-        console.error("Profile PATCH error:", error);
-        return errHandler(error as CustomError);
+  try {
+    console.log("Profile PATCH Request received");
+    
+    // Extract user ID using the robust function
+    const userId = await getUserIdFromCookies(req);
+    
+    if (!userId) {
+      console.log("No user ID found in cookies - unauthorized");
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+    
+    console.log("User ID extracted successfully:", userId);
+    const body = await req.json();
+    const res = await database.collection("profiles").updateOne(
+      { userId: new ObjectId(userId) },
+      { $set: body },
+      { upsert: true }
+    );
+    
+    return NextResponse.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Profile PATCH error:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 }
+    );
+  }
 }

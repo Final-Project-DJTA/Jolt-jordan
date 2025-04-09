@@ -8,161 +8,112 @@ import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Spinner } from "@/components/ui/spinner"
 import JobPreferenceTags from "@/components/profile/job-preference-tags"
+import { toast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
-  const [isLoaded, setIsLoaded] = useState(false)
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [authError, setAuthError] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-
+  
   useEffect(() => {
-    setIsLoaded(true)
-    
     const fetchProfile = async () => {
       try {
-        // Add stronger cache-busting with a unique ID
-        const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        const response = await fetch(`/api/profile?nonce=${nonce}`, {
+        setIsLoading(true);
+        setAuthError(false);
+        
+        console.log("Fetching profile data...");
+        const response = await fetch("/api/profile", {
           headers: {
             "Content-Type": "application/json",
-            // Add no-cache headers to prevent browser caching
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
           },
-          // Critical: This prevents browser from using any cached responses
-          cache: "no-store",
-          credentials: "include",
-        })
+          credentials: "include", // Critical for sending cookies
+          cache: 'no-store',
+        });
+
+        console.log("Profile API response status:", response.status);
         
         if (!response.ok) {
           if (response.status === 401) {
-            router.push("/login")
-            return
+            console.log("Auth error - redirecting to login");
+            setAuthError(true);
+            
+            // Show error message before redirect
+            toast({
+              title: "Authentication Error",
+              description: "Please login to view your profile",
+              variant: "destructive",
+            });
+            
+            // Delay redirect slightly to allow toast to show
+            setTimeout(() => {
+              router.push("/login");
+            }, 1000);
+            return;
           }
-          throw new Error(`Failed to fetch profile: ${response.status}`)
+          throw new Error(`Failed to fetch profile: ${response.status}`);
         }
+
+        const data = await response.json();
+        console.log("Profile data received");
         
-        const data = await response.json()
-        console.log("Profile API response:", data)
-        
-        // Properly structure the user and profile data
-        // Check if data is already properly structured
-        if (data && data.profile) {
-          // Data already has the expected structure
-          setUser(data)
-        } 
-        // Handle case where profile might be embedded differently
-        else if (data && data._id) {
-          // Extract user fields vs profile fields
-          const { 
-            _id, name, email, username, role, telegramId, telegramVerified,
-            // Everything else goes into profile
-            ...profileFields 
-          } = data;
-          
-          // Create properly structured user object
-          setUser({
-            _id,
-            name,
-            email,
-            username,
-            role: role || "user",
-            telegramId,
-            telegramVerified,
-            // Ensure profile is properly structured
-            profile: {
-              // Include known profile fields
-              userId: _id,
-              avatar: profileFields.avatar || "",
-              location: profileFields.location || "",
-              bio: profileFields.bio || "",
-              skills: profileFields.skills || [],
-              tags: profileFields.tags || [],
-              appliedJobs: profileFields.appliedJobs || [],
-              savedJobs: profileFields.savedJobs || [],
-              personalInfo: profileFields.personalInfo || {},
-              education: profileFields.education || [],
-              experience: profileFields.experience || []
-            }
-          })
-        } else {
-          console.error("Unexpected data structure from API:", data)
-          throw new Error("Invalid data structure received from API")
-        }
+        setUser(data);
       } catch (error) {
-        console.error("Error fetching profile:", error)
-        // Use fallback mock data if needed
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile data. Please try again.",
+          variant: "destructive",
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    
-    fetchProfile()
-    
-    // Specifically extract the 'nocache' parameter to force refresh
-    const forceRefresh = searchParams?.get('nocache');
-    
-  }, [router, searchParams])
+    };
 
-  // Check for recently updated avatar
-  useEffect(() => {
-    // Only run on client-side
-    if (typeof window === 'undefined') return;
-    
-    const updatedAvatar = localStorage.getItem('updated_avatar_url');
-    const updatedAt = localStorage.getItem('avatar_updated_at');
-    
-    // If avatar was recently updated (within last 5 seconds)
-    if (updatedAvatar && updatedAt && 
-        Date.now() - parseInt(updatedAt) < 5000 && 
-        user && user.profile) {
-      
-      // Update the avatar in the current state
-      setUser(prevUser => ({
-        ...prevUser,
-        profile: {
-          ...prevUser.profile,
-          avatar: updatedAvatar
-        }
-      }));
-      
-      // Clear the stored values
-      localStorage.removeItem('updated_avatar_url');
-      localStorage.removeItem('avatar_updated_at');
-    }
-  }, [user]);
+    fetchProfile();
+  }, [router, searchParams]);
 
-  // Show loading spinner while data is being fetched
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
       </div>
-    )
+    );
+  }
+  
+  if (authError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+        <p className="text-gray-600 mb-4">Please login to view your profile</p>
+        <button 
+          onClick={() => router.push("/login")}
+          className="px-4 py-2 bg-primary text-white rounded-md"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
   }
 
-  // Make sure both components get the data they expect
   return (
-    <div className="container mx-auto py-12">
-      {isLoaded && (
+    <div className="container mx-auto py-12 px-4">
+      {searchParams.get("welcome") === "true" && (
         <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="fixed bottom-8 right-8 z-10"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-primary/10 text-primary p-4 mb-8 rounded-lg"
         >
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2, ease: "easeInOut" }}
-            className="relative w-16 h-16 cursor-pointer"
-            whileHover={{ rotate: 10, scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Image 
-              src="/images/logo.svg" 
-              alt="Jolt Jordan Logo" 
-              fill 
+          <motion.div className="flex items-center justify-between">
+            <p className="text-lg font-medium">
+              Welcome to Jolt Jordan! 🎉 Your profile has been created.
+            </p>
+            <Image
+              src="/assets/welcome.svg"
+              alt="Welcome"
+              width={80}
+              height={80}
               className="object-contain" 
             />
           </motion.div>
@@ -173,14 +124,12 @@ export default function ProfilePage() {
         <ProfileTabs user={user} />
       </div>
       
-      {/* Add the job preferences section */}
       {user && (
         <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-2xl font-bold mb-4">Job Preferences</h2>
           <JobPreferenceTags 
             userTags={user?.profile?.tags || []} 
             onTagsUpdated={(newTags) => {
-              // Update the user state with new tags
               setUser(prevUser => ({
                 ...prevUser,
                 profile: {
@@ -193,6 +142,6 @@ export default function ProfilePage() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
