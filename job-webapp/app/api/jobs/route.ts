@@ -31,17 +31,21 @@ export async function GET(req:Request) {
     }
 }
 
-export async function POST(req:Request) {
-    try {
-        const userId = req.headers.get("x-user-id")
-        if(!userId) return Response.json({message: "Unauthorized"}, {status: 401})
+// export async function POST(req:Request) {
+//     try {
+//         console.log("🔥 Masuk API /api/jobs");
+// console.log("Headers:", req.headers);
 
-        const {jobId} = await req.json()
-        if(!jobId) return Response.json({message: "Job ID is required"}, {status: 400})
 
-        const res = await JobModel.applyJob(userId, jobId)
-        return Response.json(res)
-    } catch (error) {
-        return errHandler(error as CustomError)
-    }
-}
+//         const userId = req.headers.get("x-user-id")
+//         if(!userId) return Response.json({message: "Unauthorized"}, {status: 401})
+//             console.log("x-user-id:", req.headers.get("x-user-id"));
+//         const {jobId} = await req.json()
+//         if(!jobId) return Response.json({message: "Job ID is required"}, {status: 400})
+
+//         const res = await JobModel.applyJob(userId, jobId)
+//         return Response.json(res)
+//     } catch (error) {
+//         return errHandler(error as CustomError)
+//     }
+// }
