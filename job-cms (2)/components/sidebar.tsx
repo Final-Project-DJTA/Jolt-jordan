@@ -83,8 +83,8 @@ export function Sidebar() {
             <img src="/jojo-logo.svg" alt="Jojo Jobs" className="h-full w-full object-contain" />
           </motion.div>
           <div>
-            <span className="text-lg font-bold text-white">Jojo</span>
-            <span className="text-lg font-bold text-secondary"> Jobs</span>
+            <span className="text-lg font-bold text-white">Jolt</span>
+            <span className="text-lg font-bold text-secondary"> Jordan</span>
           </div>
         </Link>
       </div>
