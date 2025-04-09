@@ -81,36 +81,43 @@ class JobModel {
 
     // In the applyJob method, update to use ProfileModel
 
-    static async applyJob(userId: string, jobId: string){
+    static async applyJob(userId: string, jobId: string) {
         const userCollection = database.collection("User");
         const jobObjId = new ObjectId(jobId);
+    
+        const user = await userCollection.findOne({ _id: new ObjectId(userId) });
+        if (!user) throw { message: "User not found", status: 404 };
+        console.log("userId dr applyJob:", userId);
         
-        // Check if user exists
-        const user = await userCollection.findOne({_id: new ObjectId(userId)});
-        if(!user) throw {message: "User not found", status: 404};
-        
-        // Get profile from ProfileModel
+    
         const profile = await ProfileModel.findByUserId(userId);
-        if(!profile) throw {message: "Profile not found", status: 404};
-        
-        // Check if profile is complete
-        const isIncomplete = !profile.avatar || !profile.location || !profile.bio || !profile.skills || profile.skills.length === 0;
-        
-        if(isIncomplete){
-            throw {message: "Please complete your profile before applying", status: 400};
+        if (!profile) throw { message: "Profile not found", status: 404 };
+    
+        const isIncomplete =
+          !profile.avatar ||
+          !profile.location ||
+          !profile.jobPosition || // ensure 'jobPosition' is filled
+          !profile.skills ||
+          profile.skills.length === 0;
+    
+        if (isIncomplete) {
+          throw {
+            message: "Please complete your profile before applying",
+            status: 400,
+          };
         }
-        
-        // Check if already applied
+    
         const alreadyApplied = profile.appliedJobs?.includes(jobId);
-        if(alreadyApplied){
-            throw {message: "You have already applied to this job", status: 409};
+        if (alreadyApplied) {
+          throw {
+            message: "You have already applied to this job",
+            status: 409,
+          };
         }
-        
-        // Add job to applied jobs in profile
-        await ProfileModel.addAppliedJob(userId, jobId);
-        
-        return { message: "Application successful!"};
-    }
+    
+        const res = await ProfileModel.addAppliedJob(userId, jobId);
+        return { message: res };
+      }
 }
 
 export default JobModel

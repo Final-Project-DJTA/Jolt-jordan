@@ -31,6 +31,28 @@ export default function JobDetail({ job }: JobDetailProps) {
   const bookmarked = isBookmarked(job._id)
   const [showConfetti, setShowConfetti] = useState(false)
   const [confettiPos, setConfettiPos] = useState({ x: 0, y: 0 })
+  const [applied, setApplied] = useState(false)
+
+  const handleApply = async () => {
+    try {
+      const res = await fetch("/api/jobs/apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ jobId: job._id }),
+      })      
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+  
+      setApplied(true);
+      alert("Successfully applied!");
+    } catch (err: any) {
+      alert(err.message || "Failed to apply");
+    }
+  };  
 
   const handleBookmark = async (e: React.MouseEvent) => {
     if (bookmarked) return
@@ -78,11 +100,10 @@ export default function JobDetail({ job }: JobDetailProps) {
                   variant="outline"
                   disabled={bookmarked}
                   onClick={handleBookmark}
-                  className={`${
-                    bookmarked
+                  className={`${bookmarked
                       ? "text-yellow-600 bg-yellow-100"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <Bookmark className="h-4 w-4 mr-2" />
                   {bookmarked ? "Bookmarked" : "Bookmark"}
@@ -171,7 +192,15 @@ export default function JobDetail({ job }: JobDetailProps) {
             <CardTitle>Apply for this job</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button className="w-full bg-primary hover:bg-primary/90">Apply Now</Button>
+            {/* <Button className="w-full bg-primary hover:bg-primary/90">Apply Now</Button> */}
+            <Button
+              className="w-full bg-primary hover:bg-primary/90"
+              onClick={handleApply}
+              disabled={applied}
+            >
+              {applied ? "Applied" : "Apply Now"}
+            </Button>
+
             <p className="text-sm text-gray-500 mt-4">
               This will redirect you to the company&apos;s application process.
             </p>
@@ -203,7 +232,7 @@ export default function JobDetail({ job }: JobDetailProps) {
                 <Users className="h-4 w-4 text-gray-500 mr-2 mt-1" />
                 <div>
                   <p className="text-sm font-medium">Company Size</p>
-                  <p className="text-sm text-gray-600">{job.company.size} employees</p>
+                  <p className="text-sm text-gray-600">{job.company.size}</p>
                 </div>
               </div>
 

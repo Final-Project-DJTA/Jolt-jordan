@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+    console.log("🌐 Middleware HIT:", request.method, request.nextUrl.pathname)
+
     // Handle CORS preflight requests
     if (request.method === "OPTIONS") {
         return new NextResponse(null, {
@@ -29,10 +31,12 @@ export async function middleware(request: NextRequest) {
 
     const isBookmarkAPI = request.nextUrl.pathname.startsWith("/api/bookmarks");
     const isBookmarkPage = request.nextUrl.pathname.startsWith("/bookmarks");
-    const isApplyJob = request.nextUrl.pathname === "/api/jobs" && request.method === "POST";
+    // const isApplyJob = request.nextUrl.pathname === "/api/jobs" && request.method === "POST";
+    const isApplyJob = request.nextUrl.pathname === "/api/jobs/[slug]/apply" && request.method === "POST";
     const isProfileAPI = request.nextUrl.pathname === "/api/profile";
 
     const needsAuth = isBookmarkAPI || isBookmarkPage || isApplyJob || isProfileAPI;
+    ;
     console.log("Needs auth:", needsAuth);
 
     if(needsAuth){
@@ -66,7 +70,9 @@ export async function middleware(request: NextRequest) {
                 response.headers.set("Access-Control-Allow-Origin", "*");
                 response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
                 response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-                
+                console.log("Auth cookie value:", auth);
+                console.log("Middleware decoded userId:", decoded._id);
+
                 return response;
             } catch (joseError) {
                 console.log("Token verification failed:", joseError);
@@ -85,7 +91,7 @@ export async function middleware(request: NextRequest) {
     response.headers.set("Access-Control-Allow-Origin", "*");
     response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    
+
     return response;
 }
 
@@ -96,7 +102,7 @@ export const config = {
         "/api/profile/tags",
         "/api/telegram/send-job-recommendations", // Add this line
         "/api/bookmarks/:path*",
-        "/api/jobs", 
+        "/api/jobs/[slug]/:path*", 
         "/bookmarks",
         "/profile/:path*",
         "/telegram-debug/job-notifications" // Add this line to protect the debug page
