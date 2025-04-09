@@ -3,7 +3,11 @@ import JobDetail from "@/components/jobs/job-detail"
 import type { JobType } from "@/types"
 
 export default async function JobDetailPageComponent({ params }: { params: { slug: string } }) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/jobs/${params.slug}`, {
+  // Extract slug first to resolve the warning
+  const { slug } = params;
+  
+  // Now use the extracted slug variable
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/jobs/${slug}`, {
     cache: "no-store",
   })
 
