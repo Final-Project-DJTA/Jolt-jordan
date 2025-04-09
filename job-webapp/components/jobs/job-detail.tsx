@@ -38,6 +38,10 @@ export default function JobDetail({ job }: JobDetailProps) {
   const handleApply = async () => {
     try {
       setIsApplying(true);
+      
+      // Add better error handling for production
+      console.log("Sending application for job:", job._id);
+      
       const res = await fetch("/api/jobs/apply", {
         method: "POST",
         headers: {
@@ -45,18 +49,32 @@ export default function JobDetail({ job }: JobDetailProps) {
         },
         credentials: "include",
         body: JSON.stringify({ jobId: job._id }),
-      })      
+      });
       
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      // Log the response status for debugging
+      console.log("Application response status:", res.status);
+      
+      let data;
+      try {
+        data = await res.json();
+        console.log("Application response data:", data);
+      } catch (e) {
+        console.error("Failed to parse response as JSON:", e);
+        data = { message: "Unable to process server response" };
+      }
+      
+      if (!res.ok) throw new Error(data.message || `Server error: ${res.status}`);
   
       setApplied(true);
+      
+      // Show success message
       toast({
         title: "Application Successful",
         description: "Your application has been submitted.",
         variant: "default",
       });
     } catch (err: any) {
+      console.error("Application error:", err);
       toast({
         title: "Application Failed",
         description: err.message || "Failed to apply for this job.",
