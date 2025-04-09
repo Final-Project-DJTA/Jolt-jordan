@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 // import { currentUser } from "@/lib/data"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
+import { User } from "@/lib/mongodb/models"
 // import { useAuth } from "@/hooks/use-auth"
 
 
@@ -13,7 +14,7 @@ export function WelcomeBanner() {
   const [showFox, setShowFox] = useState(false)
   // const { user } = useAuth() // Get the authenticated user
 
-  // const userName = user?.name || 'User'
+  // const userName = User.name || 'User'
   const userName ='User'
 
 
@@ -29,7 +30,7 @@ export function WelcomeBanner() {
     <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary to-primary/80 p-6 text-white shadow-lg mb-6">
       <div className="flex flex-col md:flex-row items-center justify-between">
         <div className="mb-4 md:mb-0">
-          <h2 className="text-2xl font-bold mb-2">Welcome back, {userName}!</h2>
+          <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
           <p className="text-primary-foreground/80 max-w-md">
             Manage your job listings and track applications all in one place. Need to post a new job? Click the button
             to get started.

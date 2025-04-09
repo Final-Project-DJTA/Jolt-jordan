@@ -92,7 +92,7 @@ export default function LoginPage() {
           <div className="flex justify-center">
             {/* Logo could go here */}
           </div>
-          <CardTitle className="text-2xl font-bold">Login to Jojo Jobs</CardTitle>
+          <CardTitle className="text-2xl font-bold">Login to Jolt Jordan</CardTitle>
           <CardDescription>Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
