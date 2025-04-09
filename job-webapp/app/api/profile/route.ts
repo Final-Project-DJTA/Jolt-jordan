@@ -7,11 +7,11 @@ import { verifyWithJose } from "@/helpers/jwt";
 import { errHandler } from "@/helpers/errHandler";
 import { CustomError } from "@/types";
 
-// Reuse the robust cookie extraction function from the tags API
+// Fixed: Make cookies correctly awaited
 async function getUserIdFromCookies(request: Request) {
   try {
-    // First try using the cookies API
-    const cookieStore = cookies();
+    // First try using the cookies API - need to await this
+    const cookieStore = await cookies();
     
     // Try to get the Authorization token first (this is what login sets)
     let token = cookieStore.get("Authorization")?.value;
