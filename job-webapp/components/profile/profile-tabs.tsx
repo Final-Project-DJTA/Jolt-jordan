@@ -56,14 +56,14 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
             ) : (
               <div className="flex flex-col gap-4">
                 <p className="text-gray-500">
-                  You haven&apos;t uploaded a resume yet. Upload one to apply
-                  for jobs more quickly.
+                  Create your best CV. Upload one to apply for jobs more
+                  quickly.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link href="/profile/create-resume">
                     <Button className="bg-primary hover:bg-primary/90">
                       <Upload className="h-4 w-4 mr-2" />
-                      Upload & Check CV
+                      Check CV & Optimize
                     </Button>
                   </Link>
                   <Link href="/profile/cv/generate">
@@ -72,7 +72,7 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
                       className="border-secondary text-secondary hover:bg-secondary/10"
                     >
                       <FileText className="h-4 w-4 mr-2" />
-                      Generate CV
+                      Update Data Profile
                     </Button>
                   </Link>
                 </div>
@@ -105,10 +105,10 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
           <h2 className="text-xl font-semibold text-primary mb-4">
             Job Applications
           </h2>
-          
+
           {/* Use our new AppliedJobsList component */}
-          <AppliedJobsList 
-            appliedJobIds={(user.profile?.appliedJobs || []).filter(id => id)}
+          <AppliedJobsList
+            appliedJobIds={(user.profile?.appliedJobs || []).filter((id) => id)}
           />
         </div>
       </TabsContent>
@@ -118,9 +118,9 @@ export default function ProfileTabs({ user }: ProfileTabsProps) {
           <h2 className="text-xl font-semibold text-primary mb-4">
             Notified Jobs
           </h2>
-          
-          <SavedJobsList 
-            savedJobIds={(user.profile?.savedJobs || []).filter(id => id)}
+
+          <SavedJobsList
+            savedJobIds={(user.profile?.savedJobs || []).filter((id) => id)}
           />
         </div>
       </TabsContent>
