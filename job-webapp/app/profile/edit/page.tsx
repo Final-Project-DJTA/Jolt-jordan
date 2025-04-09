@@ -1,5 +1,8 @@
 "use client"
 
+// Add dynamic export to prevent static generation
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -261,15 +264,11 @@ export default function EditProfilePage() {
                   <FormItem>
                     <FormLabel>Job Position</FormLabel>
                     <FormControl>
-                      <Textarea
+                      <Input
                         placeholder="Your current or desired job position..."
-                        className="resize-y min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {form.watch("jobPosition")?.length || 0}/500 characters
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

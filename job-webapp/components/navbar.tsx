@@ -20,13 +20,8 @@ export default async function Navbar() {
             {auth ? (
               <>
                 <li>
-                  <Link href="/quiz" className="hover:text-secondary transition-colors">
-                    Quiz
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/salary-estimation" className="hover:text-secondary transition-colors">
-                    Salary Estimation
+                  <Link href="/profile" className="hover:text-secondary transition-colors">
+                    Profile
                   </Link>
                 </li>
                 <li>
@@ -48,16 +43,6 @@ export default async function Navbar() {
                     Jobs
                   </Link>
                 </li>
-                <li>
-                  <Link href="/quiz" className="hover:text-secondary transition-colors">
-                    Quiz
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/salary-estimation" className="hover:text-secondary transition-colors">
-                    Salary Estimation
-                  </Link>
-                </li>
               </>
             )}
           </ul>
@@ -75,11 +60,6 @@ export default async function Navbar() {
                 <li>
                   <Link href="/bookmarks" className="hover:text-secondary transition-colors">
                     Bookmarks
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/profile" className="hover:text-secondary transition-colors">
-                    Profile
                   </Link>
                 </li>
                 <li>

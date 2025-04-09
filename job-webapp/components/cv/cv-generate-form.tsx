@@ -1,699 +1,717 @@
-"use client";
+"use client"
 
-import type React from "react";
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent } from "@/components/ui/card"
+import { PlusCircle, Trash2, ArrowLeft, ArrowRight, Check } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Trash2, Download } from "lucide-react";
+interface CVGenerateFormProps {
+  profileData: any
+  currentStep: number
+  totalSteps: number
+  onPrevious: () => void
+  onNext: () => void
+  onComplete: (data: any) => void
+}
 
-export default function CVGenerateForm() {
-  const [activeTab, setActiveTab] = useState("personal");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isGenerated, setIsGenerated] = useState(false);
-  const [personalInfo, setPersonalInfo] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    location: "",
-    linkedin: "",
-    website: "",
-    summary: "",
-  });
-
-  const [education, setEducation] = useState([
-    {
-      degree: "",
-      institution: "",
+export default function CVGenerateForm({
+  profileData,
+  currentStep,
+  totalSteps,
+  onPrevious,
+  onNext,
+  onComplete
+}: CVGenerateFormProps) {
+  const [formData, setFormData] = useState({
+    personalInfo: {
+      fullName: "",
+      position: "",
       location: "",
-      startDate: "",
-      endDate: "",
-      description: "",
+      email: "",
+      phone: "",
+      linkedin: "",
+      github: "",
+      summary: ""
     },
-  ]);
-
-  const [experience, setExperience] = useState([
-    {
-      title: "",
-      company: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    },
-  ]);
-
-  const [skills, setSkills] = useState([""]);
-
-  const handlePersonalInfoChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setPersonalInfo((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleEducationChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    const newEducation = [...education];
-    newEducation[index] = { ...newEducation[index], [name]: value };
-    setEducation(newEducation);
-  };
-
-  const handleExperienceChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    const newExperience = [...experience];
-    newExperience[index] = { ...newExperience[index], [name]: value };
-    setExperience(newExperience);
-  };
-
-  const handleSkillChange = (index: number, value: string) => {
-    const newSkills = [...skills];
-    newSkills[index] = value;
-    setSkills(newSkills);
-  };
-
-  const addEducation = () => {
-    setEducation([
-      ...education,
-      {
-        degree: "",
-        institution: "",
-        location: "",
-        startDate: "",
-        endDate: "",
-        description: "",
-      },
-    ]);
-  };
-
-  const removeEducation = (index: number) => {
-    if (education.length > 1) {
-      setEducation(education.filter((_, i) => i !== index));
+    education: [],
+    experience: [],
+    skills: []
+  })
+  
+  const [errors, setErrors] = useState<{
+    personalInfo?: Record<string, string>;
+    education?: Record<number, Record<string, string>>;
+    experience?: Record<number, Record<string, string>>;
+    skills?: string;
+  }>({})
+  
+  const [skillsInput, setSkillsInput] = useState("")
+  
+  // Initialize form data from profile data when it's available
+  useEffect(() => {
+    if (profileData) {
+      setFormData({
+        personalInfo: profileData.personalInfo || formData.personalInfo,
+        education: profileData.education || [],
+        experience: profileData.experience || [],
+        skills: profileData.skills || []
+      })
+      setSkillsInput(profileData.skills?.join(", ") || "")
     }
-  };
-
-  const addExperience = () => {
-    setExperience([
-      ...experience,
-      {
-        title: "",
-        company: "",
-        location: "",
-        startDate: "",
-        endDate: "",
-        description: "",
-      },
-    ]);
-  };
-
-  const removeExperience = (index: number) => {
-    if (experience.length > 1) {
-      setExperience(experience.filter((_, i) => i !== index));
-    }
-  };
-
-  const addSkill = () => {
-    setSkills([...skills, ""]);
-  };
-
-  const removeSkill = (index: number) => {
-    if (skills.length > 1) {
-      setSkills(skills.filter((_, i) => i !== index));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsGenerating(true);
-
-    try {
-      // Prepare the CV data
-      const cvData = {
-        personalInfo,
-        education,
-        experience,
-        skills,
-      };
-
-      console.log("CV generation form submitted:", cvData);
-
-      // Send data to the API
-      const response = await fetch("/api/cv", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(cvData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save CV");
+  }, [profileData])
+  
+  // Handle input changes for personal info
+  const handlePersonalInfoChange = (e) => {
+    const { name, value } = e.target
+    setFormData({
+      ...formData,
+      personalInfo: {
+        ...formData.personalInfo,
+        [name]: value
       }
-
-      setIsGenerated(true);
-    } catch (error) {
-      console.error("CV generation error:", error);
-      // You could add an error state here to display to the user
-    } finally {
-      setIsGenerating(false);
+    })
+    
+    // Clear error for this field if it exists
+    if (errors.personalInfo?.[name]) {
+      setErrors({
+        ...errors,
+        personalInfo: {
+          ...errors.personalInfo,
+          [name]: ""
+        }
+      })
     }
-  };
-
-  return (
-    <div>
-      <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="personal">Personal Info</TabsTrigger>
-          <TabsTrigger value="education">Education</TabsTrigger>
-          <TabsTrigger value="experience">Experience</TabsTrigger>
-          <TabsTrigger value="skills">Skills</TabsTrigger>
-        </TabsList>
-
-        <form onSubmit={handleSubmit}>
-          <TabsContent value="personal">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>
-                  Enter your basic information for your CV
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      value={personalInfo.fullName}
-                      onChange={handlePersonalInfoChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={personalInfo.email}
-                      onChange={handlePersonalInfoChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={personalInfo.phone}
-                      onChange={handlePersonalInfoChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      name="location"
-                      placeholder="City, Country"
-                      value={personalInfo.location}
-                      onChange={handlePersonalInfoChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn (optional)</Label>
-                    <Input
-                      id="linkedin"
-                      name="linkedin"
-                      placeholder="linkedin.com/in/username"
-                      value={personalInfo.linkedin}
-                      onChange={handlePersonalInfoChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Website (optional)</Label>
-                    <Input
-                      id="website"
-                      name="website"
-                      placeholder="yourwebsite.com"
-                      value={personalInfo.website}
-                      onChange={handlePersonalInfoChange}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="summary">Professional Summary</Label>
-                  <Textarea
-                    id="summary"
-                    name="summary"
-                    placeholder="A brief summary of your professional background and goals"
-                    className="min-h-[100px]"
-                    value={personalInfo.summary}
-                    onChange={handlePersonalInfoChange}
-                    required
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button
-                  type="button"
-                  onClick={() =>
-                    (
-                      document.querySelector(
-                        '[data-value="education"]'
-                      ) as HTMLElement
-                    )?.click()
-                  }
-                >
-                  Next: Education
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="education">
-            <Card>
-              <CardHeader>
-                <CardTitle>Education</CardTitle>
-                <CardDescription>
-                  Add your educational background
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {education.map((edu, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border border-gray-200 rounded-lg space-y-4"
-                  >
+  }
+  
+  // Handle adding education entry
+  const addEducation = () => {
+    setFormData({
+      ...formData,
+      education: [
+        ...formData.education,
+        {
+          degree: "",
+          institution: "",
+          location: "",
+          startDate: "",
+          endDate: "",
+          description: ""
+        }
+      ]
+    })
+  }
+  
+  // Handle education changes
+  const handleEducationChange = (index, field, value) => {
+    const updatedEducation = [...formData.education]
+    updatedEducation[index] = {
+      ...updatedEducation[index],
+      [field]: value
+    }
+    setFormData({
+      ...formData,
+      education: updatedEducation
+    })
+    
+    // Clear error for this field if it exists
+    if (errors.education?.[index]?.[field]) {
+      const updatedErrors = { ...errors }
+      if (updatedErrors.education?.[index]) {
+        updatedErrors.education[index][field] = ""
+      }
+      setErrors(updatedErrors)
+    }
+  }
+  
+  // Handle removing education entry
+  const removeEducation = (index) => {
+    const updatedEducation = formData.education.filter((_, i) => i !== index)
+    setFormData({
+      ...formData,
+      education: updatedEducation
+    })
+  }
+  
+  // Handle adding experience entry
+  const addExperience = () => {
+    setFormData({
+      ...formData,
+      experience: [
+        ...formData.experience,
+        {
+          title: "",
+          company: "",
+          location: "",
+          startDate: "",
+          endDate: "",
+          description: ""
+        }
+      ]
+    })
+  }
+  
+  // Handle experience changes
+  const handleExperienceChange = (index, field, value) => {
+    const updatedExperience = [...formData.experience]
+    updatedExperience[index] = {
+      ...updatedExperience[index],
+      [field]: value
+    }
+    setFormData({
+      ...formData,
+      experience: updatedExperience
+    })
+    
+    // Clear error for this field if it exists
+    if (errors.experience?.[index]?.[field]) {
+      const updatedErrors = { ...errors }
+      if (updatedErrors.experience?.[index]) {
+        updatedErrors.experience[index][field] = ""
+      }
+      setErrors(updatedErrors)
+    }
+  }
+  
+  // Handle removing experience entry
+  const removeExperience = (index) => {
+    const updatedExperience = formData.experience.filter((_, i) => i !== index)
+    setFormData({
+      ...formData,
+      experience: updatedExperience
+    })
+  }
+  
+  // Handle skills changes
+  const handleSkillsChange = (e) => {
+    const skillsString = e.target.value
+    setSkillsInput(skillsString)
+    
+    const skillsArray = skillsString
+      .split(',')
+      .map(skill => skill.trim())
+      .filter(skill => skill !== "")
+    
+    setFormData({
+      ...formData,
+      skills: skillsArray
+    })
+    
+    // Clear skills error if it exists
+    if (errors.skills) {
+      setErrors({
+        ...errors,
+        skills: ""
+      })
+    }
+  }
+  
+  // Validate current step
+  const validateStep = () => {
+    switch (currentStep) {
+      case 0: // Personal Info
+        const personalInfoErrors = {}
+        
+        if (!formData.personalInfo.fullName?.trim()) {
+          personalInfoErrors["fullName"] = "Full name is required"
+        }
+        
+        if (!formData.personalInfo.email?.trim()) {
+          personalInfoErrors["email"] = "Email is required"
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.personalInfo.email)) {
+          personalInfoErrors["email"] = "Please enter a valid email"
+        }
+        
+        if (Object.keys(personalInfoErrors).length > 0) {
+          setErrors({ ...errors, personalInfo: personalInfoErrors })
+          return false
+        }
+        
+        return true
+        
+      case 1: // Education
+        return true // Education is optional
+        
+      case 2: // Experience
+        return true // Experience is optional
+        
+      case 3: // Skills
+        return true // Skills are optional
+        
+      default:
+        return true
+    }
+  }
+  
+  // Handle next button click
+  const handleNext = () => {
+    const isValid = validateStep()
+    if (isValid) {
+      onNext()
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before continuing.",
+        variant: "destructive",
+      })
+    }
+  }
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onComplete(formData)
+  }
+  
+  // Render different form sections based on current step
+  const renderFormSection = () => {
+    switch (currentStep) {
+      case 0: // Personal Info
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Personal Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <Input 
+                  name="fullName" 
+                  value={formData.personalInfo.fullName || ""} 
+                  onChange={handlePersonalInfoChange} 
+                  placeholder="John Doe"
+                  className={errors.personalInfo?.fullName ? "border-red-500" : ""}
+                />
+                {errors.personalInfo?.fullName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.personalInfo.fullName}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Position</label>
+                <Input 
+                  name="position" 
+                  value={formData.personalInfo.position || ""} 
+                  onChange={handlePersonalInfoChange} 
+                  placeholder="Software Developer"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <Input 
+                  name="email" 
+                  type="email"
+                  value={formData.personalInfo.email || ""} 
+                  onChange={handlePersonalInfoChange} 
+                  placeholder="john.doe@example.com"
+                  className={errors.personalInfo?.email ? "border-red-500" : ""}
+                />
+                {errors.personalInfo?.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.personalInfo.email}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
+                <Input 
+                  name="phone" 
+                  value={formData.personalInfo.phone || ""} 
+                  onChange={handlePersonalInfoChange} 
+                  placeholder="+1 (123) 456-7890"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <Input 
+                name="location" 
+                value={formData.personalInfo.location || ""} 
+                onChange={handlePersonalInfoChange} 
+                placeholder="City, Country"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">LinkedIn</label>
+                <Input 
+                  name="linkedin" 
+                  value={formData.personalInfo.linkedin || ""} 
+                  onChange={handlePersonalInfoChange} 
+                  placeholder="linkedin.com/in/johndoe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">GitHub</label>
+                <Input 
+                  name="github" 
+                  value={formData.personalInfo.github || ""} 
+                  onChange={handlePersonalInfoChange} 
+                  placeholder="github.com/johndoe"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Professional Summary</label>
+              <Textarea 
+                name="summary" 
+                value={formData.personalInfo.summary || ""} 
+                onChange={handlePersonalInfoChange} 
+                placeholder="Write a brief summary of your professional background and skills..."
+                rows={4}
+              />
+            </div>
+          </div>
+        )
+        
+      case 1: // Education
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Education</h2>
+            {formData.education.length === 0 ? (
+              <p className="text-gray-500 italic">No education entries yet. Add your educational background below.</p>
+            ) : (
+              formData.education.map((edu, index) => (
+                <Card key={index} className="mb-4">
+                  <CardContent className="pt-4 space-y-3">
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium">Education #{index + 1}</h3>
-                      {education.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeEducation(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => removeEducation(index)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Remove
+                      </Button>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`degree-${index}`}>
-                          Degree/Certificate
-                        </Label>
-                        <Input
-                          id={`degree-${index}`}
-                          name="degree"
-                          value={edu.degree}
-                          onChange={(e) => handleEducationChange(index, e)}
-                          required
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Degree</label>
+                        <Input 
+                          value={edu.degree || ""} 
+                          onChange={(e) => handleEducationChange(index, "degree", e.target.value)} 
+                          placeholder="Bachelor of Science in Computer Science"
                         />
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`institution-${index}`}>
-                          Institution
-                        </Label>
-                        <Input
-                          id={`institution-${index}`}
-                          name="institution"
-                          value={edu.institution}
-                          onChange={(e) => handleEducationChange(index, e)}
-                          required
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Institution</label>
+                        <Input 
+                          value={edu.institution || ""} 
+                          onChange={(e) => handleEducationChange(index, "institution", e.target.value)} 
+                          placeholder="University Name"
                         />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`edu-location-${index}`}>
-                          Location
-                        </Label>
-                        <Input
-                          id={`edu-location-${index}`}
-                          name="location"
-                          value={edu.location}
-                          onChange={(e) => handleEducationChange(index, e)}
-                          required
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-2">
-                          <Label htmlFor={`edu-start-${index}`}>
-                            Start Date
-                          </Label>
-                          <Input
-                            id={`edu-start-${index}`}
-                            name="startDate"
-                            type="month"
-                            value={edu.startDate}
-                            onChange={(e) => handleEducationChange(index, e)}
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`edu-end-${index}`}>End Date</Label>
-                          <Input
-                            id={`edu-end-${index}`}
-                            name="endDate"
-                            type="month"
-                            value={edu.endDate}
-                            onChange={(e) => handleEducationChange(index, e)}
-                            required
-                          />
-                        </div>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`edu-description-${index}`}>
-                        Description (optional)
-                      </Label>
-                      <Textarea
-                        id={`edu-description-${index}`}
-                        name="description"
-                        placeholder="Relevant coursework, achievements, etc."
-                        value={edu.description}
-                        onChange={(e) => handleEducationChange(index, e)}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Location</label>
+                        <Input 
+                          value={edu.location || ""} 
+                          onChange={(e) => handleEducationChange(index, "location", e.target.value)} 
+                          placeholder="City, Country"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Start Date (YYYY-MM)</label>
+                        <Input 
+                          value={edu.startDate || ""} 
+                          onChange={(e) => handleEducationChange(index, "startDate", e.target.value)} 
+                          placeholder="2018-09"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">End Date (YYYY-MM)</label>
+                        <Input 
+                          value={edu.endDate || ""} 
+                          onChange={(e) => handleEducationChange(index, "endDate", e.target.value)} 
+                          placeholder="2022-05"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Description</label>
+                      <Textarea 
+                        value={edu.description || ""} 
+                        onChange={(e) => handleEducationChange(index, "description", e.target.value)} 
+                        placeholder="Additional details about your education..."
+                        rows={2}
                       />
                     </div>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addEducation}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Education
-                </Button>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const tab = document.querySelector(
-                      '[data-value="personal"]'
-                    ) as HTMLElement | null;
-                    tab?.click();
-                  }}
-                >
-                  Previous: Personal Info
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() =>
-                    (
-                      document.querySelector(
-                        '[data-value="experience"]'
-                      ) as HTMLElement
-                    )?.click()
-                  }
-                >
-                  Next: Experience
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="experience">
-            <Card>
-              <CardHeader>
-                <CardTitle>Work Experience</CardTitle>
-                <CardDescription>Add your work experience</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {experience.map((exp, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border border-gray-200 rounded-lg space-y-4"
-                  >
+                  </CardContent>
+                </Card>
+              ))
+            )}
+            
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={addEducation}
+              className="flex items-center"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Education
+            </Button>
+          </div>
+        )
+        
+      case 2: // Experience
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Work Experience</h2>
+            {formData.experience.length === 0 ? (
+              <p className="text-gray-500 italic">No experience entries yet. Add your work history below.</p>
+            ) : (
+              formData.experience.map((exp, index) => (
+                <Card key={index} className="mb-4">
+                  <CardContent className="pt-4 space-y-3">
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium">Experience #{index + 1}</h3>
-                      {experience.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeExperience(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => removeExperience(index)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Remove
+                      </Button>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`title-${index}`}>Job Title</Label>
-                        <Input
-                          id={`title-${index}`}
-                          name="title"
-                          value={exp.title}
-                          onChange={(e) => handleExperienceChange(index, e)}
-                          required
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Job Title</label>
+                        <Input 
+                          value={exp.title || ""} 
+                          onChange={(e) => handleExperienceChange(index, "title", e.target.value)} 
+                          placeholder="Software Engineer"
                         />
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`company-${index}`}>Company</Label>
-                        <Input
-                          id={`company-${index}`}
-                          name="company"
-                          value={exp.company}
-                          onChange={(e) => handleExperienceChange(index, e)}
-                          required
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Company</label>
+                        <Input 
+                          value={exp.company || ""} 
+                          onChange={(e) => handleExperienceChange(index, "company", e.target.value)} 
+                          placeholder="Company Name"
                         />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`exp-location-${index}`}>
-                          Location
-                        </Label>
-                        <Input
-                          id={`exp-location-${index}`}
-                          name="location"
-                          value={exp.location}
-                          onChange={(e) => handleExperienceChange(index, e)}
-                          required
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-2">
-                          <Label htmlFor={`exp-start-${index}`}>
-                            Start Date
-                          </Label>
-                          <Input
-                            id={`exp-start-${index}`}
-                            name="startDate"
-                            type="month"
-                            value={exp.startDate}
-                            onChange={(e) => handleExperienceChange(index, e)}
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`exp-end-${index}`}>End Date</Label>
-                          <Input
-                            id={`exp-end-${index}`}
-                            name="endDate"
-                            type="month"
-                            value={exp.endDate}
-                            onChange={(e) => handleExperienceChange(index, e)}
-                            required
-                          />
-                        </div>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`exp-description-${index}`}>
-                        Description
-                      </Label>
-                      <Textarea
-                        id={`exp-description-${index}`}
-                        name="description"
-                        placeholder="Describe your responsibilities and achievements"
-                        className="min-h-[100px]"
-                        value={exp.description}
-                        onChange={(e) => handleExperienceChange(index, e)}
-                        required
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Location</label>
+                        <Input 
+                          value={exp.location || ""} 
+                          onChange={(e) => handleExperienceChange(index, "location", e.target.value)} 
+                          placeholder="City, Country"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Start Date (YYYY-MM)</label>
+                        <Input 
+                          value={exp.startDate || ""} 
+                          onChange={(e) => handleExperienceChange(index, "startDate", e.target.value)} 
+                          placeholder="2020-01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">End Date (YYYY-MM)</label>
+                        <Input 
+                          value={exp.endDate || ""} 
+                          onChange={(e) => handleExperienceChange(index, "endDate", e.target.value)} 
+                          placeholder="2022-12 (or Present)"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Description</label>
+                      <Textarea 
+                        value={exp.description || ""} 
+                        onChange={(e) => handleExperienceChange(index, "description", e.target.value)} 
+                        placeholder="Describe your responsibilities and achievements..."
+                        rows={3}
                       />
                     </div>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addExperience}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Experience
-                </Button>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    (
-                      document.querySelector(
-                        '[data-value="education"]'
-                      ) as HTMLElement
-                    )?.click()
-                  }
-                >
-                  Previous: Education
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() =>
-                    (
-                      document.querySelector(
-                        '[data-value="skills"]'
-                      ) as HTMLElement
-                    )?.click()
-                  }
-                >
-                  Next: Skills
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="skills">
-            <Card>
-              <CardHeader>
-                <CardTitle>Skills</CardTitle>
-                <CardDescription>
-                  Add your technical and professional skills
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  {skills.map((skill, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        placeholder="e.g., JavaScript, Project Management, etc."
-                        value={skill}
-                        onChange={(e) =>
-                          handleSkillChange(index, e.target.value)
-                        }
-                      />
-                      {skills.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSkill(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+            
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={addExperience}
+              className="flex items-center"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Experience
+            </Button>
+          </div>
+        )
+        
+      case 3: // Skills
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Skills</h2>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Enter your skills (comma separated)
+              </label>
+              <Textarea 
+                value={skillsInput} 
+                onChange={handleSkillsChange}
+                placeholder="JavaScript, React, Node.js, Python, SQL, Project Management..."
+                rows={5}
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Add your technical skills, soft skills, and any tools or technologies you're proficient in.
+              </p>
+            </div>
+            
+            {formData.skills.length > 0 && (
+              <div className="pt-3">
+                <h3 className="text-sm font-medium mb-2">Preview:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills.map((skill, index) => (
+                    <div key={index} className="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">
+                      {skill}
                     </div>
                   ))}
                 </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addSkill}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Skill
-                </Button>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    (
-                      document.querySelector(
-                        '[data-value="experience"]'
-                      ) as HTMLElement
-                    )?.click()
-                  }
-                >
-                  Previous: Experience
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-primary hover:bg-primary/90"
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? "Generating..." : "Generate CV"}
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        </form>
-      </Tabs>
-
-      {isGenerated && (
-        <Card className="mt-8 border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center p-6">
-              <div className="bg-green-100 p-3 rounded-full mb-4">
-                <FileText className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold text-primary mb-2">
-                Your CV has been generated!
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Your professional CV has been created based on the information
-                you provided.
-              </p>
-              <div className="flex gap-4">
-                <Button className="bg-primary hover:bg-primary/90">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-                <Button variant="outline">Preview</Button>
+            )}
+          </div>
+        )
+        
+      case 4: // Review
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Review Your CV</h2>
+            
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-medium text-primary mb-2">Personal Information</h3>
+              <div className="grid grid-cols-2 gap-y-2">
+                <div className="font-medium">Full Name:</div>
+                <div>{formData.personalInfo.fullName}</div>
+                
+                <div className="font-medium">Position:</div>
+                <div>{formData.personalInfo.position}</div>
+                
+                <div className="font-medium">Email:</div>
+                <div>{formData.personalInfo.email}</div>
+                
+                <div className="font-medium">Phone:</div>
+                <div>{formData.personalInfo.phone}</div>
+                
+                <div className="font-medium">Location:</div>
+                <div>{formData.personalInfo.location}</div>
               </div>
+              
+              {formData.personalInfo.summary && (
+                <>
+                  <div className="font-medium mt-2">Summary:</div>
+                  <p className="text-sm mt-1">{formData.personalInfo.summary}</p>
+                </>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+            
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-medium text-primary mb-2">Education ({formData.education.length})</h3>
+              {formData.education.length > 0 ? (
+                formData.education.map((edu, index) => (
+                  <div key={index} className="mb-3 pb-3 border-b border-gray-100 last:border-b-0 last:mb-0 last:pb-0">
+                    <div className="font-medium">{edu.degree}</div>
+                    <div>{edu.institution}{edu.location ? `, ${edu.location}` : ""}</div>
+                    <div className="text-sm text-gray-500">
+                      {edu.startDate && edu.startDate}{edu.startDate && edu.endDate && " - "}{edu.endDate && edu.endDate}
+                    </div>
+                    {edu.description && <p className="text-sm mt-1">{edu.description}</p>}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No education entries added</p>
+              )}
+            </div>
+            
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-medium text-primary mb-2">Experience ({formData.experience.length})</h3>
+              {formData.experience.length > 0 ? (
+                formData.experience.map((exp, index) => (
+                  <div key={index} className="mb-3 pb-3 border-b border-gray-100 last:border-b-0 last:mb-0 last:pb-0">
+                    <div className="font-medium">{exp.title}</div>
+                    <div>{exp.company}{exp.location ? `, ${exp.location}` : ""}</div>
+                    <div className="text-sm text-gray-500">
+                      {exp.startDate && exp.startDate}{exp.startDate && exp.endDate && " - "}{exp.endDate && exp.endDate}
+                    </div>
+                    {exp.description && <p className="text-sm mt-1">{exp.description}</p>}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No experience entries added</p>
+              )}
+            </div>
+            
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-medium text-primary mb-2">Skills ({formData.skills.length})</h3>
+              {formData.skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills.map((skill, index) => (
+                    <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No skills added</p>
+              )}
+            </div>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+  
+  return (
+    <form onSubmit={handleSubmit} className="mb-6">
+      {renderFormSection()}
+      
+      <div className="mt-8 flex justify-between">
+        <Button 
+          type="button"
+          variant="outline"
+          onClick={onPrevious}
+          disabled={currentStep === 0}
+          className="flex items-center"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Previous
+        </Button>
+        
+        {currentStep < totalSteps - 1 ? (
+          <Button 
+            type="button"
+            onClick={handleNext}
+            className="flex items-center"
+          >
+            Next
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button 
+            type="submit"
+            className="bg-green-600 hover:bg-green-700 flex items-center"
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Complete & Generate CV
+          </Button>
+        )}
+      </div>
+    </form>
+  )
 }
