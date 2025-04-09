@@ -35,14 +35,8 @@ export default function JobDetail({ job }: JobDetailProps) {
 
   const handleApply = async () => {
     try {
-      const res = await fetch("/api/jobs/apply", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ jobId: job._id }),
-      })      
+      setIsApplying(true);
+      });
       
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
