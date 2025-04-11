@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+export const maxDuration = 60; // 1 day
 // import pdfParse from "pdf-parse";
 // import { PdfReader } from "pdfreader";
 // import fs from "fs";
