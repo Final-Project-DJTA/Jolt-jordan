@@ -198,12 +198,12 @@ export function Sidebar() {
                 Log in
               </Link>
             </Button>
-            <Button asChild variant="outline" className="w-full justify-start bg-transparent border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 hover:text-secondary">
+            {/* <Button asChild variant="outline" className="w-full justify-start bg-transparent border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 hover:text-secondary">
               <Link href="/register">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Create Account
               </Link>
-            </Button>
+            </Button> */}
           </div>
         )}
       </div>
