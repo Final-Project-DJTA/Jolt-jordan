@@ -1,0 +1,14 @@
+"Jolt-Jordan"
+
+fitur cms-site:
+- homepage (card all job)
+- add job
+- profile page
+- cv builder
+
+fitur user-site:
+- homepage (card all job)
+- detail job (apply)
+- bookmark (not interested, interested, none)
+- profile page
+- add cv (form)
