@@ -2,9 +2,9 @@ import { notFound } from "next/navigation"
 import JobDetail from "@/components/jobs/job-detail"
 import type { JobType } from "@/types"
 
-export default async function JobDetailPageComponent({ params }: { params: { slug: string } }) {
+export default async function JobDetailPageComponent({ params }: { params: Promise<{ slug: string }> }) {
   // Extract slug first to resolve the warning
-  const { slug } = params;
+  const { slug } = await params;
   
   // Now use the extracted slug variable
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/jobs/${slug}`, {
